@@ -1,6 +1,6 @@
 import { Application, Container, Graphics, Texture } from "pixi.js";
 import { MapLayer } from "./map-layer";
-import { Tile } from "./tile";
+import { Tile, TileState } from "./tile";
 import { Tileset } from "./tileset";
 import { UI } from "./ui";
 
@@ -88,9 +88,12 @@ export class Map {
         this.layers[this.activeLayer].clearLayer();
     }
 
-    public fillTiles(texture: string): void {
+    public fillTiles(): void {
+        const state = this.ui?.getState();
         this.layers[this.activeLayer].foreachTile((tile) => {
-            tile.texture = this.tileset?.getTexture(texture) ?? Texture.WHITE;
+            if (state) {
+                this.setTileState(tile, state);
+            }
         });
     }
 
@@ -101,10 +104,14 @@ export class Map {
     private onTileClick(tile: Tile): void {
         const state = this.ui?.getState();
         if (state) {
-            tile.texture = this.tileset?.getTexture(state.texture) ?? Texture.WHITE;
-            tile.angle = state.rotation;
-            tile.tint = state.tint;
-            tile.offset = state.offset;
+            this.setTileState(tile, state);
         }
+    }
+
+    private setTileState(tile: Tile, state: TileState): void {
+        tile.texture = this.tileset?.getTexture(state.texture) ?? Texture.WHITE;
+        tile.angle = state.rotation;
+        tile.tint = state.tint;
+        tile.offset.set(state.offset.x, state.offset.y);
     }
 }

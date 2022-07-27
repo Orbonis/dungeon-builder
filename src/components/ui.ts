@@ -1,6 +1,7 @@
 import { cloneDeep } from "lodash";
 import { Application, Container, Graphics, Point, Sprite } from "pixi.js";
 import { Map } from "./map";
+import { TileState } from "./tile";
 import { Tileset } from "./tileset"
 
 interface TileData {
@@ -8,13 +9,6 @@ interface TileData {
     sprite: Sprite;
     outline: Graphics;
     selector: Graphics;
-}
-
-interface TileState {
-    texture: string;
-    rotation: number;
-    offset: Point;
-    tint: number;
 }
 
 export class UI {
@@ -204,7 +198,7 @@ export class UI {
         this.container?.addChildAt(outline, 0);
 
         this.fillButton.on("click", () => {
-            this.map.fillTiles(this.state.texture);
+            this.map.fillTiles();
         });
     }
 }
