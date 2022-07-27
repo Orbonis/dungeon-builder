@@ -1,0 +1,23 @@
+.desktop {
+    .mobile-only {
+        display: none;
+    }
+}
+
+.mobile {
+    .desktop-only {
+        display: none;
+    }
+}
+
+.landscape {
+    .portrait-only {
+        display: none;
+    }
+}
+
+.portrait {
+    .landscape-only {
+        display: none;
+    }
+}

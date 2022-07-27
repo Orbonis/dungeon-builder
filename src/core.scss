@@ -1,0 +1,52 @@
+html, body {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+
+    font-size: 20pt;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+#app {
+    width: 100%;
+    height: 100%;
+}
+
+canvas {
+    display: none;
+}
+
+.repo-link {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    padding: 10pt 0 0 0;
+    z-index: 10;
+
+    a {
+        color: #CCCCCC;
+    }
+
+    a:active {
+        color: #AAAAFF;
+    }
+}
+
+.audio-link {
+    position: absolute;
+    width: 100%;
+    bottom: 5pt;
+    text-align: center;
+    padding: 10pt 0 0 0;
+    z-index: 10;
+    font-size: 0.5em;
+
+    a {
+        color: #CCCCCC;
+    }
+
+    a:active {
+        color: #AAAAFF;
+    }
+}
