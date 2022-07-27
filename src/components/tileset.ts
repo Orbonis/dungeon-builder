@@ -1,5 +1,4 @@
 import { Loader, Spritesheet, Texture } from "pixi.js";
-import { Tile } from "./tile";
 
 export class Tileset {
     private loader: Loader;
@@ -9,12 +8,12 @@ export class Tileset {
         this.loader = new Loader();
     }
 
-    public load(): Promise<void> {
+    public load(path: string): Promise<void> {
         return new Promise((resolve, reject) => {
             this.loader
-                .add("assets/spritesheet.json")
+                .add(path)
                 .load(() => {
-                    this.spritesheet = this.loader.resources["assets/spritesheet.json"].spritesheet;
+                    this.spritesheet = this.loader.resources[path].spritesheet;
                     if (this.spritesheet) {
                         resolve();
                     } else {
@@ -43,9 +42,5 @@ export class Tileset {
         } else {
             throw new Error(`Attempted to get tile ${id} without an appropriate spritesheet loaded.`);
         }
-    }
-
-    public getTile(id: string): Tile {
-        return new Tile(this.getTexture(id));
     }
 }

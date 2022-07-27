@@ -1,5 +1,6 @@
 import { cloneDeep } from "lodash";
 import { Application, Container, Graphics, Point, Sprite } from "pixi.js";
+import { Map } from "./map";
 import { Tileset } from "./tileset"
 
 interface TileData {
@@ -16,7 +17,10 @@ interface TileState {
     tint: number;
 }
 
-export class TileSelect {
+export class UI {
+    private map: Map;
+
+    private uiTileset: Tileset;
     private tileset: Tileset;
     private container?: Container;
     private tileContainer?: Container;
@@ -26,9 +30,14 @@ export class TileSelect {
     
     private selectedButton?: Sprite;
     private rotateButton?: Sprite;
+    private fillButton?: Sprite;
 
-    constructor(tileset: Tileset) {
+    constructor(map: Map, uiTileset: Tileset, tileset: Tileset) {
+        this.map = map;
+
         this.tileset = tileset;
+        this.uiTileset = uiTileset;
+
         this.state = {
             texture: "",
             rotation: 0,
@@ -47,6 +56,7 @@ export class TileSelect {
         this.createTileContainer(app);
         this.createSelectedButton();
         this.createRotateButton();
+        this.createFillButton();
 
         this.update();
         app.stage.addChild(this.container);
@@ -150,15 +160,15 @@ export class TileSelect {
     }
 
     private createRotateButton(): void {
-        this.rotateButton = new Sprite(this.tileset.getTexture("arrow.png"));
+        this.rotateButton = new Sprite(this.uiTileset.getTexture("arrow_clockwise.png"));
         this.rotateButton.x = 150;
         this.rotateButton.y = 50;
-        this.rotateButton.width = 80;
+        this.rotateButton.width = 60;
         this.rotateButton.height = (this.rotateButton.texture.height / this.rotateButton.texture.width) * this.rotateButton.width;
         this.rotateButton.buttonMode = true;
         this.rotateButton.interactive = true;
-        this.rotateButton.angle = 90;
         this.rotateButton.anchor.set(0.5);
+        this.rotateButton.tint = 0x222222;
         this.container?.addChildAt(this.rotateButton, 0);
 
         const outline = new Graphics();
@@ -171,6 +181,30 @@ export class TileSelect {
         this.rotateButton.on("click", () => {
             this.state.rotation += 90;
             this.update();
+        });
+    }
+
+    private createFillButton(): void {
+        this.fillButton = new Sprite(this.uiTileset.getTexture("timer_100.png"));
+        this.fillButton.x = 250;
+        this.fillButton.y = 50;
+        this.fillButton.width = 60;
+        this.fillButton.height = (this.fillButton.texture.height / this.fillButton.texture.width) * this.fillButton.width;
+        this.fillButton.buttonMode = true;
+        this.fillButton.interactive = true;
+        this.fillButton.anchor.set(0.5);
+        this.fillButton.tint = 0x222222;
+        this.container?.addChildAt(this.fillButton, 0);
+
+        const outline = new Graphics();
+        outline.lineStyle(4, 0xCCCCCC);
+        outline.drawRect(0, 0, 100, 100);
+        outline.x = 200;
+        outline.y = 0;
+        this.container?.addChildAt(outline, 0);
+
+        this.fillButton.on("click", () => {
+            this.map.fillTiles(this.state.texture);
         });
     }
 }

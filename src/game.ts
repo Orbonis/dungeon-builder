@@ -2,11 +2,14 @@ import { Application } from "pixi.js";
 import { update as TweenUpdate } from "@tweenjs/tween.js";
 import { LoadFonts } from "./utils/load-font";
 import { Tileset } from "./components/tileset";
-import { TileSelect } from "./components/tile-select";
+import { UI } from "./components/ui";
+import { Map } from "./components/map";
 
 export class Game {
+    public uiTileset: Tileset;
     public tileset: Tileset;
-    public tileSelect: TileSelect;
+    public ui: UI;
+    public map: Map;
 
     public app?: Application;
 
@@ -14,8 +17,10 @@ export class Game {
     private lastUpdateTime?: number;
 
     constructor() {
+        this.uiTileset = new Tileset();
         this.tileset = new Tileset();
-        this.tileSelect = new TileSelect(this.tileset);
+        this.map = new Map({ height: 10, width: 10 });
+        this.ui = new UI(this.map, this.uiTileset, this.tileset);
     }
 
     public async init(canvas: HTMLCanvasElement): Promise<void> {
@@ -27,10 +32,13 @@ export class Game {
             transparent: true
         });
 
+
         try {
             await LoadFonts("Roboto Condensed");
-            await this.tileset.load();
-            await this.tileSelect.init(this.app);
+            await this.uiTileset.load("assets/ui_sheet.json");
+            await this.tileset.load("assets/spritesheet.json");
+            await this.ui.init(this.app);
+            await this.map.init(this.app, this.ui, this.tileset);
     
             this.app.render();
             canvas.style.display = "block";
