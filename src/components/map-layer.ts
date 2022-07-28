@@ -1,4 +1,4 @@
-import { Container, Texture } from "pixi.js";
+import { Container, InteractionEvent, Texture } from "pixi.js";
 import { Tile } from "./tile";
 
 export class MapLayer extends Container {
@@ -11,8 +11,17 @@ export class MapLayer extends Container {
         for (let x = 0; x < width; x++) {
             this.tiles.push([]);
             for (let y = 0; y < height; y++) {
-                this.tiles[x].push(new Tile(x, y, tileSize, Texture.WHITE));
-                this.tiles[x][y].on("click", () => onTileClick(this.tiles[x][y]));
+                this.tiles[x].push(new Tile(x, y, tileSize, Texture.EMPTY));
+                this.tiles[x][y].on("pointerdown", (e: InteractionEvent) => {
+                    if (e.data.buttons === 1) {
+                        onTileClick(this.tiles[x][y]);
+                    }
+                });
+                this.tiles[x][y].on("pointerover", (e: InteractionEvent) => {
+                    if (e.data.buttons === 1) {
+                        onTileClick(this.tiles[x][y]);
+                    }
+                });
                 this.addChild(this.tiles[x][y]);
             }
         }

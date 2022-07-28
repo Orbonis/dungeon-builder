@@ -36,7 +36,7 @@ export class Map {
         this.tileset = tileset;
 
         this.container.scale.set(0.8);
-        this.container.x = 100;
+        this.container.x = 8;
         this.container.y = 150;
         this.app.stage.addChildAt(this.container, 0);
 
@@ -55,6 +55,10 @@ export class Map {
 
     public setActiveLayer(index: number): void {
         this.activeLayer = Math.max(0, Math.min(this.layers.length - 1, index));
+        this.layers.forEach((x, i) => {
+            x.interactiveChildren = i === this.activeLayer;
+            x.alpha = (i === this.activeLayer) ? 1 : 0.5;
+        });
     }
 
     public addLayerBelow(): void {
@@ -62,6 +66,7 @@ export class Map {
         this.layers.splice(this.activeLayer, 0, layer);
         this.container.addChildAt(layer, this.activeLayer);
         this.container.addChild(this.grid);
+        this.setActiveLayer(this.activeLayer);
     }
 
     public addLayerAbove(): void {
@@ -70,14 +75,26 @@ export class Map {
         this.layers.splice(this.activeLayer, 0, layer);
         this.container.addChildAt(layer, this.activeLayer);
         this.container.addChild(this.grid);
+        this.setActiveLayer(this.activeLayer);
     }
 
     public removeLayer(): void {
         if (this.layers.length > 1) {
             this.layers.splice(this.activeLayer, 1);
-            this.activeLayer--;
-            this.activeLayer = Math.max(0, this.activeLayer);
+            this.setActiveLayer(this.activeLayer - 1);
         }
+    }
+
+    public getActiveLayer(): number {
+        return this.activeLayer;
+    }
+
+    public nextLayer(): void {
+        this.setActiveLayer(this.activeLayer + 1);
+    }
+
+    public previousLayer(): void {
+        this.setActiveLayer(this.activeLayer - 1);
     }
 
     public getLayerCount(): number {
@@ -109,7 +126,7 @@ export class Map {
     }
 
     private setTileState(tile: Tile, state: TileState): void {
-        tile.texture = this.tileset?.getTexture(state.texture) ?? Texture.WHITE;
+        tile.texture = (state.texture.length > 0) ? this.tileset?.getTexture(state.texture) ?? Texture.WHITE : Texture.EMPTY;
         tile.angle = state.rotation;
         tile.tint = state.tint;
         tile.offset.set(state.offset.x, state.offset.y);

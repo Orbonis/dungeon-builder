@@ -52,6 +52,7 @@ export class Game {
         this.delta = (time - (this.lastUpdateTime ?? 0)) / 1000;
 
         if (this.lastUpdateTime) {
+            this.ui.update();
             TweenUpdate(time);
             this.app?.render();
         }

@@ -10,6 +10,7 @@ export class Tile extends Sprite {
     public offset: Point;
 
     private coords: Point;
+    private size: number;
 
     constructor(x: number, y: number, size: number, texture: Texture) {
         super(texture);
@@ -20,6 +21,7 @@ export class Tile extends Sprite {
         this.interactive = true;
         this.buttonMode = true;
         this.anchor.set(0.5);
+        this.size = size;
 
         this.offset = new Point(0, 0);
     }
@@ -35,6 +37,8 @@ export class Tile extends Sprite {
         this.offset = new Point(0, 0);
         this.x = this.coords.x * this.width;
         this.y = this.coords.y * this.height;
+        this.width = this.size;
+        this.height = this.size;
     }
 
     public updateTransform(): void {
