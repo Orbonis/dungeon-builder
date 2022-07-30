@@ -21,6 +21,8 @@ export class Map {
 
     private activeLayer: number;
 
+    private onTileClickCallback?: (tile: Tile) => void;
+
     constructor(config: MapConfig) {
         this.config = config;
 
@@ -54,6 +56,18 @@ export class Map {
         this.container.addChildAt(this.layers[0], 0);
 
         (window as any).map = this;
+
+        const data = localStorage.getItem("last_states");
+        if (data) {
+            const states = JSON.parse(data) as TileState[][][];
+            if (states) {
+                this.load(states);
+            }
+        }
+    }
+
+    public setOnTileClickCallback(callback: (tile: Tile) => void): void {
+        this.onTileClickCallback = callback;
     }
 
     public setActiveLayer(index: number): void {
@@ -83,6 +97,7 @@ export class Map {
 
     public removeLayer(): void {
         if (this.layers.length > 1) {
+            this.container.removeChild(this.layers[this.activeLayer]);
             this.layers.splice(this.activeLayer, 1);
             this.setActiveLayer(this.activeLayer - 1);
         }
@@ -117,22 +132,37 @@ export class Map {
         });
     }
 
+    public setTileState(tile: Tile, state: TileState): void {
+        tile.setState(state, this.tileset);
+    }
+
+    public save(): TileState[][][] {
+        const states = this.layers.map((layer) => layer.getTileStates());
+        localStorage.setItem("last_states", JSON.stringify(states));
+        return states;
+    }
+
+    public load(states: TileState[][][]): void {
+        this.layers.forEach((layer) => this.container.removeChild(layer));
+        this.layers = [];
+        this.activeLayer = 0;
+        states.forEach((states) => {
+            const layer = this.createLayer();
+            layer.setTileStates(states, this.tileset);
+            this.layers.push(layer);
+            this.container.addChild(layer);
+        });
+
+        this.container.addChild(this.grid);
+    }
+
     private createLayer(): MapLayer {
         return new MapLayer(this.config.width, this.config.height, 100, (tile: Tile) => this.onTileClick(tile));
     }
 
     private onTileClick(tile: Tile): void {
-        const state = this.ui?.getState();
-        if (state) {
-            this.setTileState(tile, state);
+        if (this.onTileClickCallback) {
+            this.onTileClickCallback(tile);
         }
-    }
-
-    private setTileState(tile: Tile, state: TileState): void {
-        tile.texture = (state.texture.length > 0) ? this.tileset?.getTexture(state.texture) ?? Texture.WHITE : Texture.EMPTY;
-        tile.angle = state.rotation;
-        tile.tint = state.tint;
-        tile.offset.set(state.offset.x, state.offset.y);
-        tile.alpha = state.alpha;
     }
 }

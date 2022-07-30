@@ -30,12 +30,10 @@ export class Game {
             transparent: true
         });
 
-
         try {
             await LoadFonts("Roboto Condensed");
-            await this.ui.loadUITileset("assets/ui_sheet.json");
             await this.tileset.load("assets/spritesheet.json");
-            await this.ui.init(this.app);
+            await this.ui.init(this.app, "assets/ui_sheet.json");
             await this.map.init(this.app, this.ui, this.tileset);
     
             this.app.render();

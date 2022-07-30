@@ -1,5 +1,6 @@
 import { Container, InteractionEvent, Texture } from "pixi.js";
-import { Tile } from "./tile";
+import { Tile, TileState } from "./tile";
+import { Tileset } from "./tileset";
 
 export class MapLayer extends Container {
     private tiles: Tile[][];
@@ -11,7 +12,7 @@ export class MapLayer extends Container {
         for (let x = 0; x < width; x++) {
             this.tiles.push([]);
             for (let y = 0; y < height; y++) {
-                this.tiles[x].push(new Tile(x, y, tileSize, Texture.EMPTY));
+                this.tiles[x].push(new Tile(x, y, tileSize));
                 this.tiles[x][y].on("pointerdown", (e: InteractionEvent) => {
                     if (e.data.buttons === 1) {
                         onTileClick(this.tiles[x][y]);
@@ -29,6 +30,18 @@ export class MapLayer extends Container {
 
     public getTile(x: number, y: number): Tile {
         return this.tiles[x][y];
+    }
+
+    public setTileStates(states: TileState[][], tileset?: Tileset): void {
+        for (let x = 0; x < states.length; x++) {
+            for (let y = 0; y < states[x].length; y++) {
+                this.tiles[x][y].setState({ ...states[x][y] }, tileset);
+            }
+        }
+    }
+
+    public getTileStates(): TileState[][] {
+        return this.tiles.map((tiles) => tiles.map((tile) => tile.getState()));
     }
 
     public clearLayer(): void {

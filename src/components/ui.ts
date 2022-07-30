@@ -1,7 +1,7 @@
 import { cloneDeep } from "lodash";
 import { Application, Container, Graphics, Point, Sprite, Text, Texture } from "pixi.js";
 import { Map } from "./map";
-import { TileState } from "./tile";
+import { Tile, TileState } from "./tile";
 import { Tileset } from "./tileset"
 import { color, interpolateHsl, interpolateRgb } from "d3";
 
@@ -60,7 +60,8 @@ export class UI {
         };
     }
 
-    public async init(app: Application): Promise<void> {
+    public async init(app: Application, uiTilesetPath: string): Promise<void> {
+        await this.uiTileset.load(uiTilesetPath);
 
         const border = new Graphics();
         border.lineStyle(1, 0x000000, 0.2);
@@ -80,6 +81,10 @@ export class UI {
         this.createTintButton();
         this.createAlphaButton();
         this.createLayerButtons();
+
+        this.map.setOnTileClickCallback((tile: Tile) => {
+            this.map.setTileState(tile, this.state);
+        });
 
         app.stage.addChild(this.container);
     }
