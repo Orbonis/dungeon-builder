@@ -19,7 +19,7 @@ export class Game {
     constructor() {
         this.uiTileset = new Tileset();
         this.tileset = new Tileset();
-        this.map = new Map({ height: 10, width: 10 });
+        this.map = new Map({ height: 10, width: 15 });
         this.ui = new UI(this.map, this.uiTileset, this.tileset);
     }
 

@@ -5,7 +5,7 @@ import { TileState } from "./tile";
 import { Tileset } from "./tileset"
 import { color, interpolateHsl, interpolateRgb } from "d3";
 
-interface TileData {
+interface OptionData {
     id: string | number;
     sprite: Sprite;
     outline: Graphics;
@@ -20,17 +20,20 @@ export class UI {
     private container?: Container;
 
     private tileContainer?: Container;
-    private tiles?: TileData[];
+    private tiles?: OptionData[];
 
     private colourContainer?: Container;
-    private colours?: TileData[];
+    private colours?: OptionData[];
+
+    private alphaContainer?: Container;
+    private alphas?: OptionData[];
 
     private state: TileState;
     
     private selectedButton?: Sprite;
     private rotateButton?: Sprite;
     private tintButton?: Sprite;
-    private fillButton?: Sprite;
+    private alphaButton?: Sprite;
 
     private layerUIContainer?: Container;
     private currentLayerLabel?: Text;
@@ -39,6 +42,7 @@ export class UI {
     private addLayerButton?: Sprite;
     private removeLayerButton?: Sprite;
     private clearLayerButton?: Sprite;
+    private fillLayerButton?: Sprite;
 
     constructor(map: Map, uiTileset: Tileset, tileset: Tileset) {
         this.map = map;
@@ -50,7 +54,8 @@ export class UI {
             texture: "",
             rotation: 0,
             offset: new Point(0, 0),
-            tint: 0xFFFFFF
+            tint: 0xFFFFFF,
+            alpha: 1
         };
     }
 
@@ -63,10 +68,11 @@ export class UI {
 
         this.createTileContainer(app);
         this.createColourContainer(app);
+        this.createAlphaContainer(app);
         this.createSelectedButton();
         this.createRotateButton();
-        this.createFillButton();
         this.createTintButton();
+        this.createAlphaButton();
         this.createLayerButtons();
 
         app.stage.addChild(this.container);
@@ -100,6 +106,10 @@ export class UI {
             this.tintButton.texture = this.uiTileset.getTexture(texture);
             this.tintButton.tint = (this.state.tint === 0xFFFFFF) ? 0x000000: this.state.tint;
         }
+
+        if (this.alphaButton) {
+            this.alphaButton.alpha = this.state.alpha;
+        }
     }
 
     private createColourContainer(app: Application): void {
@@ -118,7 +128,7 @@ export class UI {
 
         const background = new Graphics();
         background.beginFill(0xFFFFFF);
-        background.drawRect(-5, -5, 1010, 1010);
+        background.drawRect(-5, -5, 1510, 1010);
         background.endFill();
         this.colourContainer.addChild(background);
 
@@ -167,6 +177,64 @@ export class UI {
         });
     }
 
+    private createAlphaContainer(app: Application): void {
+        const alphas: number[] = [ 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1 ];
+        this.alphaContainer = new Container();
+        this.alphaContainer.visible = false;
+        this.container?.addChild(this.alphaContainer);
+
+        const background = new Graphics();
+        background.beginFill(0xFFFFFF);
+        background.drawRect(-5, -5, 1510, 1010);
+        background.endFill();
+        this.alphaContainer.addChild(background);
+
+        this.alphas = alphas.map((id, index) => {
+            const texture = this.uiTileset.getTexture("timer_100.png");
+            const sprite = new Sprite(texture);
+            sprite.buttonMode = true;
+            sprite.interactive = true;
+            sprite.width = 60;
+            sprite.height = (texture.height / texture.width) * sprite.width;
+            sprite.anchor.set(0.5);
+            sprite.tint = 0x000000;
+            sprite.alpha = id;
+
+            sprite.x = ((index * 100) % app.screen.width) + (sprite.width / 2);
+            sprite.y = (Math.floor((index * 100) / app.screen.width) * 100) + ((sprite.width - sprite.height) / 2) + (sprite.height / 2);
+
+            const outline = new Graphics();
+            outline.lineStyle(4, 0x330066);
+            outline.drawRect(0, 0, 100, 100);
+            outline.x = ((index * 100) % app.screen.width);
+            outline.y = (Math.floor((index * 100) / app.screen.width) * 100);
+            outline.visible = false;
+
+            const selector = new Graphics();
+            selector.lineStyle(4, 0x993333);
+            selector.drawRect(0, 0, 100, 100);
+            selector.x = ((index * 100) % app.screen.width);
+            selector.y = (Math.floor((index * 100) / app.screen.width) * 100);
+            selector.visible = false;
+
+            this.alphaContainer?.addChild(sprite, outline, selector);
+
+            sprite.on("pointerover", () => {
+                this.tiles?.forEach((tile, i) => {
+                    tile.outline.visible = i === index;
+                });
+            });
+
+            sprite.on("click", () => {
+                this.state.alpha = id;
+                this.update();
+                this.alphaContainer!.visible = false;
+            });
+
+            return { id, sprite, outline, selector, selected: index === 0 };
+        });
+    }
+
     private createTileContainer(app: Application): void {
         const textures = [ "", ...this.tileset.getTextureList() ];
         this.state.texture = textures[1];
@@ -177,7 +245,7 @@ export class UI {
 
         const background = new Graphics();
         background.beginFill(0xFFFFFF);
-        background.drawRect(-5, -5, 1010, 1010);
+        background.drawRect(-5, -5, 1510, 1010);
         background.endFill();
         this.tileContainer.addChild(background);
 
@@ -258,18 +326,20 @@ export class UI {
         });
     }
 
-    private createFillButton(): void {
-        this.fillButton = new Sprite(this.uiTileset.getTexture("d6.png"));
-        this.setupButton(this.fillButton, 100, 60, new Point(850, 40), this.container!);
+    private createAlphaButton(): void {
+        this.alphaButton = new Sprite(this.uiTileset.getTexture("timer_100.png"));
+        this.setupButton(this.alphaButton, 100, 60, new Point(300, 40), this.container!);
+        this.container?.addChildAt(this.alphaButton, 0);
 
-        this.fillButton.on("click", () => {
-            this.map.fillTiles();
+        this.alphaButton.on("click", () => {
+            this.alphaContainer!.visible = true;
+            this.container?.addChild(this.alphaContainer!);
         });
     }
 
     private createLayerButtons(): void {
         this.layerUIContainer = new Container();
-        this.layerUIContainer.x = 350;
+        this.layerUIContainer.x = 450;
         this.container?.addChild(this.layerUIContainer);
 
         this.currentLayerLabel = new Text("Current Layer: 0", {});
@@ -293,6 +363,9 @@ export class UI {
         this.clearLayerButton = new Sprite(this.uiTileset.getTexture("d6_outline.png"));
         this.setupButton(this.clearLayerButton, 100, 60, new Point(400, 40), this.layerUIContainer);
         this.clearLayerButton.on("click", () => this.map.clearLayer());
+        this.fillLayerButton = new Sprite(this.uiTileset.getTexture("d6.png"));
+        this.setupButton(this.fillLayerButton, 100, 60, new Point(500, 40), this.layerUIContainer);
+        this.fillLayerButton.on("click", () => this.map.fillTiles());
     }
 
     private setupButton(button: Sprite, size: number, iconSize: number, offset: Point, parent: Container): void {

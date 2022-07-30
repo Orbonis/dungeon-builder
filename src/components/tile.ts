@@ -1,10 +1,11 @@
-import { Point, Sprite, Texture } from "pixi.js";
+import { Point, Rectangle, Sprite, Texture } from "pixi.js";
 
 export interface TileState {
     texture: string;
     rotation: number;
     offset: Point;
     tint: number;
+    alpha: number;
 }
 export class Tile extends Sprite {
     public offset: Point;
@@ -16,12 +17,13 @@ export class Tile extends Sprite {
         super(texture);
 
         this.coords = new Point(x, y);
+        this.size = size;
         this.width = size;
         this.height = size;
         this.interactive = true;
         this.buttonMode = true;
         this.anchor.set(0.5);
-        this.size = size;
+        this.texture = Texture.EMPTY;
 
         this.offset = new Point(0, 0);
     }

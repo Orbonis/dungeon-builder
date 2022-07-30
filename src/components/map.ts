@@ -130,5 +130,6 @@ export class Map {
         tile.angle = state.rotation;
         tile.tint = state.tint;
         tile.offset.set(state.offset.x, state.offset.y);
+        tile.alpha = state.alpha;
     }
 }
