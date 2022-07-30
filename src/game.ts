@@ -6,7 +6,6 @@ import { UI } from "./components/ui";
 import { Map } from "./components/map";
 
 export class Game {
-    public uiTileset: Tileset;
     public tileset: Tileset;
     public ui: UI;
     public map: Map;
@@ -17,10 +16,9 @@ export class Game {
     private lastUpdateTime?: number;
 
     constructor() {
-        this.uiTileset = new Tileset();
         this.tileset = new Tileset();
         this.map = new Map({ height: 10, width: 15 });
-        this.ui = new UI(this.map, this.uiTileset, this.tileset);
+        this.ui = new UI(this.map, this.tileset);
     }
 
     public async init(canvas: HTMLCanvasElement): Promise<void> {
@@ -35,7 +33,7 @@ export class Game {
 
         try {
             await LoadFonts("Roboto Condensed");
-            await this.uiTileset.load("assets/ui_sheet.json");
+            await this.ui.loadUITileset("assets/ui_sheet.json");
             await this.tileset.load("assets/spritesheet.json");
             await this.ui.init(this.app);
             await this.map.init(this.app, this.ui, this.tileset);

@@ -36,8 +36,9 @@ export class Map {
         this.tileset = tileset;
 
         this.container.scale.set(0.8);
-        this.container.x = 8;
-        this.container.y = 150;
+        this.container.pivot.set((this.config.width * 100) / 2, (this.config.height * 100) / 2);
+        this.container.x = app.screen.width / 2;
+        this.container.y = (app.screen.height / 2) + 90;
         this.app.stage.addChildAt(this.container, 0);
 
         this.grid.lineStyle(2, 0xEEEEEE);
@@ -51,6 +52,8 @@ export class Map {
         this.layers = [ new MapLayer(this.config.width, this.config.height, 100, (tile: Tile) => this.onTileClick(tile))];
         this.activeLayer = 0;
         this.container.addChildAt(this.layers[0], 0);
+
+        (window as any).map = this;
     }
 
     public setActiveLayer(index: number): void {

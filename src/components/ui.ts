@@ -13,6 +13,7 @@ interface OptionData {
 }
 
 export class UI {
+
     private map: Map;
 
     private uiTileset: Tileset;
@@ -44,11 +45,11 @@ export class UI {
     private clearLayerButton?: Sprite;
     private fillLayerButton?: Sprite;
 
-    constructor(map: Map, uiTileset: Tileset, tileset: Tileset) {
+    constructor(map: Map, tileset: Tileset) {
         this.map = map;
 
         this.tileset = tileset;
-        this.uiTileset = uiTileset;
+        this.uiTileset = new Tileset();
 
         this.state = {
             texture: "",
@@ -60,6 +61,11 @@ export class UI {
     }
 
     public async init(app: Application): Promise<void> {
+
+        const border = new Graphics();
+        border.lineStyle(1, 0x000000, 0.2);
+        border.drawRect(1, 0, app.screen.width - 1, app.screen.height - 1);
+        app.stage.addChild(border);
 
         this.container = new Container();
         this.container.x = 5;
@@ -110,6 +116,10 @@ export class UI {
         if (this.alphaButton) {
             this.alphaButton.alpha = this.state.alpha;
         }
+    }
+
+    public loadUITileset(path: string): Promise<void> {
+        return this.uiTileset.load(path);
     }
 
     private createColourContainer(app: Application): void {
