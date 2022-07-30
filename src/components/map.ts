@@ -11,7 +11,6 @@ export interface MapConfig {
 
 export class Map {
     private app?: Application;
-    private ui?: UI;
     private tileset?: Tileset;
     private config: MapConfig;
 
@@ -32,9 +31,8 @@ export class Map {
         this.activeLayer = 0;
     }
 
-    public async init(app: Application, ui: UI, tileset: Tileset): Promise<void> {
+    public async init(app: Application, tileset: Tileset): Promise<void> {
         this.app = app;
-        this.ui = ui;
         this.tileset = tileset;
 
         this.container.scale.set(0.8);
@@ -123,8 +121,7 @@ export class Map {
         this.layers[this.activeLayer].clearLayer();
     }
 
-    public fillTiles(): void {
-        const state = this.ui?.getState();
+    public fillTiles(state: TileState): void {
         this.layers[this.activeLayer].foreachTile((tile) => {
             if (state) {
                 this.setTileState(tile, state);

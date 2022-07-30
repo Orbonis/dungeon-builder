@@ -34,7 +34,7 @@ export class Game {
             await LoadFonts("Roboto Condensed");
             await this.tileset.load("assets/spritesheet.json");
             await this.ui.init(this.app, "assets/ui_sheet.json");
-            await this.map.init(this.app, this.ui, this.tileset);
+            await this.map.init(this.app, this.tileset);
     
             this.app.render();
             canvas.style.display = "block";

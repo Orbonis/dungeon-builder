@@ -380,7 +380,7 @@ export class UI {
         this.clearLayerButton.on("click", () => this.map.clearLayer());
         this.fillLayerButton = new Sprite(this.uiTileset.getTexture("d6.png"));
         this.setupButton(this.fillLayerButton, 100, 60, new Point(500, 40), this.layerUIContainer);
-        this.fillLayerButton.on("click", () => this.map.fillTiles());
+        this.fillLayerButton.on("click", () => this.map.fillTiles(this.state));
     }
 
     private setupButton(button: Sprite, size: number, iconSize: number, offset: Point, parent: Container): void {
