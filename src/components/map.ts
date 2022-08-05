@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, Spritesheet, Texture } from "pixi.js";
+import { Application, Container, Graphics, Spritesheet } from "pixi.js";
 import { MapLayer } from "./map-layer";
 import { MapPanning } from "./map-panning";
 import { Tile, TileState } from "./tile";
@@ -22,7 +22,9 @@ export class Map {
 
     private activeLayer: number;
 
-    private onTileClickCallback?: (tile: Tile) => void;
+    private statesHistory: (TileState | undefined)[][][][] = [];
+
+    private onTileClickCallback?: (tile: Tile) => boolean;
 
     constructor(config: MapConfig) {
         this.config = config;
@@ -58,13 +60,7 @@ export class Map {
         this.activeLayer = 0;
         this.container.addChildAt(this.layers[0], 0);
 
-        const data = localStorage.getItem("last_states");
-        if (data) {
-            const states = JSON.parse(data) as TileState[][][];
-            if (states) {
-                this.load(states);
-            }
-        }
+        this.saveStates();
 
         this.container.interactive = true;
         this.container.addListener("pointerdown", () => this.mapPanning.startPanning());
@@ -113,7 +109,7 @@ export class Map {
         return this.tileset;
     }
 
-    public setOnTileClickCallback(callback: (tile: Tile) => void): void {
+    public setOnTileClickCallback(callback: (tile: Tile) => boolean): void {
         this.onTileClickCallback = callback;
     }
 
@@ -196,11 +192,12 @@ export class Map {
         this.container.addChildAt(this.grid, 0);
         this.setActiveLayer(this.activeLayer);
         this.resetPan();
+        this.statesHistory = [];
+        this.saveStates();
     }
 
     public save(): (TileState | undefined)[][][] {
         const states = this.layers.map((layer) => layer.getTileStates());
-        localStorage.setItem("last_states", JSON.stringify(states));
         return states;
     }
 
@@ -219,6 +216,21 @@ export class Map {
         this.setActiveLayer(this.activeLayer);
     }
 
+    public saveStates(): void {
+        const states = this.layers.map((layer) => layer.getTileStates());
+        this.statesHistory.push(states);
+        while (this.statesHistory.length > 100) {
+            this.statesHistory.shift();
+        }
+    }
+
+    public undo(): void {
+        if (this.statesHistory.length > 1) {
+            this.statesHistory.pop();
+            this.load(this.statesHistory[this.statesHistory.length - 1]);
+        }
+    }
+
     public refresh(): void {
         this.load(this.save());
     }
@@ -229,11 +241,10 @@ export class Map {
 
     private onTileClick(tile: Tile): void {
         if (this.onTileClickCallback) {
-            this.onTileClickCallback(tile);
+            const changed = this.onTileClickCallback(tile);
+            if (changed) {
+                this.saveStates();
+            }
         }
     }
-
-    private panHandler = () => {
-        
-    };
 }

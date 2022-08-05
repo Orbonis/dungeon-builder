@@ -20,6 +20,7 @@ interface IState {
     tileSelector: boolean;
     tileState: TileState;
     mode: InteractionMode;
+    lastMode: InteractionMode;
 }
 
 export class UI extends React.Component<IProperties, IState> {
@@ -35,8 +36,29 @@ export class UI extends React.Component<IProperties, IState> {
                 rotation: 0,
                 tint: 0xFFFFFF
             },
-            mode: InteractionMode.Normal
+            mode: InteractionMode.Normal,
+            lastMode: InteractionMode.Normal
         };
+
+        document.addEventListener("keydown", (ev: KeyboardEvent) => {
+            switch (ev.key) {
+                case " ":
+                    if (ev.repeat !== true) {
+                        this.setState({ mode: InteractionMode.Pan, lastMode: this.state.mode });
+                        ev.preventDefault();
+                    }
+                    break;
+            }
+        });
+
+        document.addEventListener("keyup", (ev: KeyboardEvent) => {
+            switch (ev.key) {
+                case " ":
+                    this.setState({ mode: this.state.lastMode });
+                    ev.preventDefault();
+                    break;
+            }
+        });
     }
 
     public componentDidUpdate(): void {
@@ -51,11 +73,13 @@ export class UI extends React.Component<IProperties, IState> {
                 switch (this.state.mode) {
                     case InteractionMode.Normal:
                         tile.setState(this.state.tileState, this.props.map?.getTileset());
-                        break;
+                        return true;
                     case InteractionMode.Delete:
                         tile.clear();
-                        break;
+                        return true;
                 }
+
+                return false;
             });
 
             this.props.map.enablePanning(this.state.mode === InteractionMode.Pan);
@@ -105,6 +129,9 @@ export class UI extends React.Component<IProperties, IState> {
                     <Menu.Item onClick={() => this.setState({ tileSelector: true })} style={{ minWidth: "50pt" }}>
                         <Image size="mini" src={(this.state.tileState.texture.length === 0) ? "" : this.props.map?.getTileset()?.getTextureURL(this.state.tileState)} />
                     </Menu.Item>
+                    <Menu.Item onClick={() => this.props.map?.undo()} style={{ minWidth: "50pt" }}>
+                        <Icon name="undo" size="big" fitted />
+                    </Menu.Item>
                     <Menu.Item onClick={() => this.setState({ tileState: { ...this.state.tileState, rotation: this.state.tileState.rotation + 90 } })} style={{ minWidth: "50pt" }}>
                         <Icon name="retweet" size="big" fitted />
                     </Menu.Item>
@@ -113,7 +140,7 @@ export class UI extends React.Component<IProperties, IState> {
                         <Menu.Item onPointerEnter={() => this.props.map?.revealMap(true)} onPointerLeave={() => this.props.map?.revealMap(false)} style={{ minWidth: "50pt", cursor: "pointer" }}>
                             <Icon name="eye" size="big" fitted />
                         </Menu.Item>
-                        <Menu.Item onPointerEnter={() => this.props.map?.revealMap(true)} onPointerLeave={() => this.props.map?.resetPan()} style={{ minWidth: "50pt", cursor: "pointer" }}>
+                        <Menu.Item onClick={() => this.props.map?.resetPan()} style={{ minWidth: "50pt", cursor: "pointer" }}>
                             <Icon name="hand paper" size="big" fitted />
                         </Menu.Item>
                     </Menu.Menu>
