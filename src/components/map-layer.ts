@@ -1,17 +1,27 @@
-import { Container, InteractionEvent, Texture } from "pixi.js";
+import { Container, Graphics, InteractionEvent, Texture } from "pixi.js";
 import { Tile, TileState } from "./tile";
 import { Tileset } from "./tileset";
 
 export class MapLayer extends Container {
     private tiles: Tile[][];
+    private highlights: Graphics[][];
 
     constructor(width: number, height: number, tileSize: number, onTileClick: (tile: Tile) => void) {
         super();
 
         this.tiles = []
+        this.highlights = [];
         for (let x = 0; x < width; x++) {
             this.tiles.push([]);
+            this.highlights.push([]);
             for (let y = 0; y < height; y++) {
+                this.highlights[x].push(new Graphics());
+                this.highlights[x][y].x = x * 100;
+                this.highlights[x][y].y = y * 100;
+                this.highlights[x][y].lineStyle(2, 0xCC8888);
+                this.highlights[x][y].drawRect(0, 0, tileSize, tileSize);
+                this.highlights[x][y].visible = false;
+
                 this.tiles[x].push(new Tile(x, y, tileSize));
                 this.tiles[x][y].on("pointerdown", (e: InteractionEvent) => {
                     if (e.data.buttons === 1) {
@@ -22,8 +32,18 @@ export class MapLayer extends Container {
                     if (e.data.buttons === 1) {
                         onTileClick(this.tiles[x][y]);
                     }
+                    this.highlights[x][y].visible = true;
+                });
+                this.tiles[x][y].on("pointerout", (e: InteractionEvent) => {
+                    this.highlights[x][y].visible = false;
                 });
                 this.addChild(this.tiles[x][y]);
+            }
+        }
+
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                this.addChild(this.highlights[x][y]);
             }
         }
     }
@@ -32,15 +52,17 @@ export class MapLayer extends Container {
         return this.tiles[x][y];
     }
 
-    public setTileStates(states: TileState[][], tileset?: Tileset): void {
+    public setTileStates(states: (TileState | undefined)[][], tileset?: Tileset): void {
         for (let x = 0; x < states.length; x++) {
             for (let y = 0; y < states[x].length; y++) {
-                this.tiles[x][y].setState({ ...states[x][y] }, tileset);
+                if (states[x][y]) {
+                    this.tiles[x][y].setState({ ...states[x][y] }, tileset);
+                }
             }
         }
     }
 
-    public getTileStates(): TileState[][] {
+    public getTileStates(): (TileState | undefined)[][] {
         return this.tiles.map((tiles) => tiles.map((tile) => tile.getState()));
     }
 

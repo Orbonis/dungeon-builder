@@ -1,5 +1,5 @@
 import React from "react";
-import { Dropdown, Grid, Image, Input, Menu, Modal } from "semantic-ui-react";
+import { Container, Dropdown, Grid, Icon, Image, Input, Menu, Modal, SemanticICONS } from "semantic-ui-react";
 import { Map } from "src/components/map";
 import { saveAs } from "file-saver";
 import fileDialog from "file-dialog";
@@ -8,7 +8,8 @@ import { Tile, TileState } from "src/components/tile";
 
 enum InteractionMode {
     Normal = 0,
-    Delete = 1
+    Delete = 1,
+    Pan = 2
 }
 
 interface IProperties {
@@ -56,12 +57,14 @@ export class UI extends React.Component<IProperties, IState> {
                         break;
                 }
             });
+
+            this.props.map.enablePanning(this.state.mode === InteractionMode.Pan);
         }
     }
 
     public render(): JSX.Element {
         return (
-            <span>
+            <Container textAlign="center">
                 <Menu key="top-menu">
                     <Menu.Item>
                         <Menu.Header content="Dungeon Builder" />
@@ -74,20 +77,46 @@ export class UI extends React.Component<IProperties, IState> {
                             <Dropdown.Item icon="images outline" content="Open Tileset" onClick={() => this.openTileset()}/>
                         </Dropdown.Menu>
                     </Dropdown>
+                    <Dropdown item text="Layers">
+                        <Dropdown.Menu>
+                            <Dropdown.Item icon="plus" content="Add Layer Above" onClick={() => {
+                                this.props.map?.addLayerAbove();
+                                this.forceUpdate();
+                            }} />
+                            <Dropdown.Item icon="minus" content="Remove Layer" onClick={() => {
+                                this.props.map?.removeLayer();
+                                this.forceUpdate();
+                            }} />
+                            <Dropdown.Item icon="square" content="Fill Layer" onClick={() => this.props.map?.fillTiles(this.state.tileState)} />
+                            <Dropdown.Item icon="square outline" content="Clear Layer" onClick={() => this.props.map?.clearLayer()} />
+                        </Dropdown.Menu>
+                    </Dropdown>
                 </Menu>
-                <Menu key="tools-menu">
-                    <Menu.Item>
+                <Menu key="tools-menu" style={{ minHeight: "50pt" }}>
+                    <Menu.Item style={{ minWidth: "50pt" }}>
                         <Input type="number" value={this.props.map?.getActiveLayer() ?? 0} style={{ maxWidth: "45pt" }} onChange={(e, d) => {
                             this.props.map?.setActiveLayer(Number(d.value));
                             this.forceUpdate();
                         }} />
                     </Menu.Item>
-                    <Menu.Item icon={this.getInteractionModeIcon()} onClick={() => this.switchInteractionMode()} />
-                    <Menu.Item onClick={() => this.setState({ tileSelector: true })}>
+                    <Menu.Item onClick={() => this.switchInteractionMode()} style={{ minWidth: "50pt" }}>
+                        <Icon name={this.getInteractionModeIcon()} size="big" fitted />
+                    </Menu.Item>
+                    <Menu.Item onClick={() => this.setState({ tileSelector: true })} style={{ minWidth: "50pt" }}>
                         <Image size="mini" src={(this.state.tileState.texture.length === 0) ? "" : this.props.map?.getTileset()?.getTextureURL(this.state.tileState)} />
                     </Menu.Item>
-                    <Menu.Item icon="retweet" onClick={() => this.setState({ tileState: { ...this.state.tileState, rotation: this.state.tileState.rotation + 90 } })} />
-                    <Menu.Item position="right" style={{ cursor: "pointer" }} icon="eye" onPointerEnter={() => this.props.map?.revealMap(true)} onPointerLeave={() => this.props.map?.revealMap(false)} />
+                    <Menu.Item onClick={() => this.setState({ tileState: { ...this.state.tileState, rotation: this.state.tileState.rotation + 90 } })} style={{ minWidth: "50pt" }}>
+                        <Icon name="retweet" size="big" fitted />
+                    </Menu.Item>
+
+                    <Menu.Menu position="right">
+                        <Menu.Item onPointerEnter={() => this.props.map?.revealMap(true)} onPointerLeave={() => this.props.map?.revealMap(false)} style={{ minWidth: "50pt", cursor: "pointer" }}>
+                            <Icon name="eye" size="big" fitted />
+                        </Menu.Item>
+                        <Menu.Item onPointerEnter={() => this.props.map?.revealMap(true)} onPointerLeave={() => this.props.map?.resetPan()} style={{ minWidth: "50pt", cursor: "pointer" }}>
+                            <Icon name="hand paper" size="big" fitted />
+                        </Menu.Item>
+                    </Menu.Menu>
 
                     <Modal open={this.state.tileSelector} onClose={() => this.setState({ tileSelector: false })} closeOnDimmerClick={true} closeIcon="close">
                         <Modal.Header content="Tile Selector" />
@@ -98,7 +127,7 @@ export class UI extends React.Component<IProperties, IState> {
                         </Modal.Content>
                     </Modal>
                 </Menu>
-            </span>
+            </Container>
         );
     }
 
@@ -164,12 +193,14 @@ export class UI extends React.Component<IProperties, IState> {
         }) ?? [];
     }
 
-    private getInteractionModeIcon(): string {
+    private getInteractionModeIcon(): SemanticICONS {
         switch (this.state.mode) {
             case InteractionMode.Normal:
                 return "edit outline";
             case InteractionMode.Delete:
                 return "delete";
+            case InteractionMode.Pan:
+                return "hand paper outline";
         }
     }
 
@@ -180,7 +211,6 @@ export class UI extends React.Component<IProperties, IState> {
         if (mode >= modes.length) {
             mode = 0;
         }
-        console.log(mode, modes);
         this.setState({ mode });
     }
 }

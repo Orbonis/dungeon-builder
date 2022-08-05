@@ -1,4 +1,4 @@
-import { Point, Sprite, Texture } from "pixi.js";
+import { Graphics, Loader, Point, Rectangle, Sprite, Text, Texture } from "pixi.js";
 import { ApplyTileState } from "src/utils/tile-utils";
 import { Tileset } from "./tileset";
 
@@ -12,7 +12,6 @@ export interface TileState {
 export class Tile extends Sprite {
     private state: TileState;
     private coords: Point;
-    private size: number;
 
     constructor(x: number, y: number, size: number) {
         super();
@@ -26,14 +25,12 @@ export class Tile extends Sprite {
         };
 
         this.coords = new Point(x, y);
-        this.size = size;
         this.width = size;
         this.height = size;
         this.interactive = true;
         this.buttonMode = true;
         this.anchor.set(0.5);
         this.texture = Texture.WHITE;
-        this.alpha = 0;
     }
 
     public getCoords(): Point {
@@ -46,8 +43,12 @@ export class Tile extends Sprite {
         super.updateTransform();
     }
 
-    public getState(): TileState {
-        return this.state;
+    public getState(): TileState | undefined {
+        if (this.state.texture === "") {
+            return undefined;
+        } else {
+            return this.state;
+        }
     }
 
     public clear(): void {
