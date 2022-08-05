@@ -1,25 +1,41 @@
-import { Loader, Spritesheet, Texture } from "pixi.js";
+import { Loader, Point, Renderer, Sprite, Spritesheet, Texture } from "pixi.js";
+import { ApplyTileState } from "src/utils/tile-utils";
+import { TileState } from "./tile";
 
 export class Tileset {
     private loader: Loader;
+    private renderer?: Renderer;
     private spritesheet?: Spritesheet;
 
     constructor() {
         this.loader = new Loader();
     }
 
-    public load(path: string): Promise<void> {
+    public load(spritesheet: string | Spritesheet, renderer?: Renderer): Promise<void> {
+        if (renderer) {
+            this.renderer = renderer;
+        }
+
         return new Promise((resolve, reject) => {
-            this.loader
-                .add(path)
-                .load(() => {
-                    this.spritesheet = this.loader.resources[path].spritesheet;
-                    if (this.spritesheet) {
-                        resolve();
-                    } else {
-                        reject("Spritesheet failed to load");
-                    }
-                });
+            if (typeof(spritesheet) === "string") {
+                this.loader
+                    .add(spritesheet)
+                    .load(() => {
+                        this.spritesheet = this.loader.resources[spritesheet].spritesheet;
+                        if (this.spritesheet) {
+                            resolve();
+                        } else {
+                            reject("Spritesheet failed to load");
+                        }
+                    });
+            } else {
+                this.spritesheet = spritesheet;
+                if (this.spritesheet) {
+                    resolve();
+                } else {
+                    reject("Spritesheet failed to load");
+                }
+            }
         });
     }
 
@@ -42,5 +58,16 @@ export class Tileset {
         } else {
             throw new Error(`Attempted to get tile ${id} without an appropriate spritesheet loaded.`);
         }
+    }
+
+    public getTextureURL(state: TileState): string | undefined {
+        const tile = new Sprite();
+        ApplyTileState(tile, state, new Point(0, 0), this);
+        tile.anchor.set(0.5);
+        tile.x = 0;
+        tile.y = 0;
+        const url = this.renderer?.extract.canvas(tile).toDataURL("image/png");
+        tile.destroy();
+        return url;
     }
 }

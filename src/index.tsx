@@ -4,6 +4,7 @@ import ReactDOM from "react-dom";
 import "./core.scss";
 import "./utils/contextual-css.scss";
 import "src/style.scss";
+import "semantic-ui-css/semantic.min.css";
 
 import "@pixi/graphics-extras";
 

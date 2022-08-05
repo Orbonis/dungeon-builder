@@ -1,8 +1,7 @@
-import { Application, Container, Graphics, Texture } from "pixi.js";
+import { Application, Container, Graphics, Spritesheet, Texture } from "pixi.js";
 import { MapLayer } from "./map-layer";
 import { Tile, TileState } from "./tile";
 import { Tileset } from "./tileset";
-import { UI } from "./ui";
 
 export interface MapConfig {
     width: number;
@@ -35,10 +34,10 @@ export class Map {
         this.app = app;
         this.tileset = tileset;
 
-        this.container.scale.set(0.8);
+        this.container.scale.set(1);
         this.container.pivot.set((this.config.width * 100) / 2, (this.config.height * 100) / 2);
         this.container.x = app.screen.width / 2;
-        this.container.y = (app.screen.height / 2) + 90;
+        this.container.y = (app.screen.height / 2);
         this.app.stage.addChildAt(this.container, 0);
 
         this.grid.lineStyle(2, 0xEEEEEE);
@@ -53,8 +52,6 @@ export class Map {
         this.activeLayer = 0;
         this.container.addChildAt(this.layers[0], 0);
 
-        (window as any).map = this;
-
         const data = localStorage.getItem("last_states");
         if (data) {
             const states = JSON.parse(data) as TileState[][][];
@@ -62,6 +59,15 @@ export class Map {
                 this.load(states);
             }
         }
+    }
+
+    public changeTileset(spritesheet: Spritesheet): void {
+        this.tileset?.load(spritesheet);
+        this.refresh();
+    }
+
+    public getTileset(): Tileset | undefined {
+        return this.tileset;
     }
 
     public setOnTileClickCallback(callback: (tile: Tile) => void): void {
@@ -129,8 +135,16 @@ export class Map {
         });
     }
 
-    public setTileState(tile: Tile, state: TileState): void {
+    public setTileState(tile: Tile, state: Partial<TileState>): void {
         tile.setState(state, this.tileset);
+    }
+
+    public new(): void {
+        this.layers.forEach((layer) => this.container.removeChild(layer));
+        this.layers = [ new MapLayer(this.config.width, this.config.height, 100, (tile: Tile) => this.onTileClick(tile))];
+        this.activeLayer = 0;
+        this.container.addChild(this.grid);
+        this.setActiveLayer(this.activeLayer);
     }
 
     public save(): TileState[][][] {
@@ -151,6 +165,11 @@ export class Map {
         });
 
         this.container.addChild(this.grid);
+        this.setActiveLayer(this.activeLayer);
+    }
+
+    public refresh(): void {
+        this.load(this.save());
     }
 
     private createLayer(): MapLayer {

@@ -2,6 +2,7 @@ const path = require("path");
 const { compilerOptions } = require("./tsconfig.json");
 const HTMLWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const webpack = require("webpack");
 
 const data = {
     mode: "development",
@@ -71,6 +72,9 @@ const data = {
             patterns: [
                 { from: "assets", to: "assets" }
             ]
+        }),
+        new webpack.ProvidePlugin({
+            PIXI: "pixi.js"
         })
     ]
 };
