@@ -5,6 +5,7 @@ import { Tileset } from "./tileset";
 export class MapLayer extends Container {
     private tiles: Tile[][];
     private highlights: Graphics[][];
+    private highlightedTile?: Tile;
 
     constructor(width: number, height: number, tileSize: number, onTileClick: (tile: Tile) => void) {
         super();
@@ -28,14 +29,16 @@ export class MapLayer extends Container {
                         onTileClick(this.tiles[x][y]);
                     }
                 });
+                this.tiles[x][y].on("pointerout", (e: InteractionEvent) => {
+                    this.highlights[x][y].visible = false;
+                    this.highlightedTile = undefined;
+                });
                 this.tiles[x][y].on("pointerover", (e: InteractionEvent) => {
                     if (e.data.buttons === 1) {
                         onTileClick(this.tiles[x][y]);
                     }
                     this.highlights[x][y].visible = true;
-                });
-                this.tiles[x][y].on("pointerout", (e: InteractionEvent) => {
-                    this.highlights[x][y].visible = false;
+                    this.highlightedTile = this.tiles[x][y];
                 });
                 this.addChild(this.tiles[x][y]);
             }
@@ -50,6 +53,10 @@ export class MapLayer extends Container {
 
     public getTile(x: number, y: number): Tile {
         return this.tiles[x][y];
+    }
+
+    public getHighlightedTile(): Tile | undefined {
+        return this.highlightedTile;
     }
 
     public setTileStates(states: (TileState | undefined)[][], tileset?: Tileset): void {

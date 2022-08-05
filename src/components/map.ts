@@ -180,6 +180,18 @@ export class Map {
         });
     }
 
+    public nudgeHighlightedTile(x: number, y: number): void {
+        const tile = this.layers[this.activeLayer].getHighlightedTile();
+        if (tile) {
+            const state = tile.getState();
+            if (state) {
+                state.offset.x += x;
+                state.offset.y += y;
+                tile.setState({ offset: state.offset });
+            }
+        }
+    }
+
     public setTileState(tile: Tile, state: Partial<TileState>): void {
         tile.setState(state, this.tileset);
     }

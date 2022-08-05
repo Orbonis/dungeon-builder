@@ -49,6 +49,22 @@ export class UI extends React.Component<IProperties, IState> {
                     }
                     break;
             }
+            if (this.state.mode === InteractionMode.Normal) {
+                switch (ev.key) {
+                    case "ArrowUp":
+                        this.props.map?.nudgeHighlightedTile(0, -1);
+                        break;
+                    case "ArrowDown":
+                        this.props.map?.nudgeHighlightedTile(0, 1);
+                        break;
+                    case "ArrowLeft":
+                        this.props.map?.nudgeHighlightedTile(-1, 0);
+                        break;
+                    case "ArrowRight":
+                        this.props.map?.nudgeHighlightedTile(1, 0);
+                        break;
+                }
+            }
         });
 
         document.addEventListener("keyup", (ev: KeyboardEvent) => {
