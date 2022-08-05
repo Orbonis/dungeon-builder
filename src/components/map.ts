@@ -82,6 +82,12 @@ export class Map {
         });
     }
 
+    public revealMap(reveal: boolean): void {
+        this.layers.forEach((x, i) => {
+            x.alpha = (i === this.activeLayer || reveal) ? 1 : 0.5;
+        });
+    }
+
     public addLayerBelow(): void {
         const layer = this.createLayer();
         this.layers.splice(this.activeLayer, 0, layer);

@@ -23,11 +23,11 @@ export class Application extends React.Component<IProperties, IState> {
     public render(): JSX.Element {
         return (
             <Container>
+                <UI map={this.state.map} />
                 <GameCanvas onMount={async (canvas) => {
                     const map = await this.state.game.init(canvas, 1500, 1000);
                     this.setState({ map });
                 }} />
-                <UI map={this.state.map} />
             </Container>
         );
     }

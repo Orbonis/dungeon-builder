@@ -32,7 +32,8 @@ export class Tile extends Sprite {
         this.interactive = true;
         this.buttonMode = true;
         this.anchor.set(0.5);
-        this.texture = Texture.EMPTY;
+        this.texture = Texture.WHITE;
+        this.alpha = 0;
     }
 
     public getCoords(): Point {
@@ -58,8 +59,7 @@ export class Tile extends Sprite {
             tint: 0xFFFFFF
         };
 
-        this.width = this.size;
-        this.height = this.size;
+        ApplyTileState(this, this.state, this.coords);
     }
 
     public updateTransform(): void {

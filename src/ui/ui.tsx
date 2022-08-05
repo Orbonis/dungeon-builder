@@ -1,11 +1,15 @@
 import React from "react";
-import { Dropdown, Grid, Icon, Image, Input, Menu, Modal } from "semantic-ui-react";
+import { Dropdown, Grid, Image, Input, Menu, Modal } from "semantic-ui-react";
 import { Map } from "src/components/map";
 import { saveAs } from "file-saver";
 import fileDialog from "file-dialog";
 import { Spritesheet, Texture } from "pixi.js";
 import { Tile, TileState } from "src/components/tile";
-import { OutlineFilter } from "pixi-filters";
+
+enum InteractionMode {
+    Normal = 0,
+    Delete = 1
+}
 
 interface IProperties {
     map?: Map;
@@ -14,6 +18,7 @@ interface IProperties {
 interface IState {
     tileSelector: boolean;
     tileState: TileState;
+    mode: InteractionMode;
 }
 
 export class UI extends React.Component<IProperties, IState> {
@@ -28,7 +33,8 @@ export class UI extends React.Component<IProperties, IState> {
                 offset: { x: 0, y: 0 },
                 rotation: 0,
                 tint: 0xFFFFFF
-            }
+            },
+            mode: InteractionMode.Normal
         };
     }
 
@@ -41,7 +47,14 @@ export class UI extends React.Component<IProperties, IState> {
             }
 
             this.props.map.setOnTileClickCallback((tile: Tile) => {
-                tile.setState(this.state.tileState, this.props.map?.getTileset());
+                switch (this.state.mode) {
+                    case InteractionMode.Normal:
+                        tile.setState(this.state.tileState, this.props.map?.getTileset());
+                        break;
+                    case InteractionMode.Delete:
+                        tile.clear();
+                        break;
+                }
             });
         }
     }
@@ -69,10 +82,13 @@ export class UI extends React.Component<IProperties, IState> {
                             this.forceUpdate();
                         }} />
                     </Menu.Item>
+                    <Menu.Item icon={this.getInteractionModeIcon()} onClick={() => this.switchInteractionMode()} />
                     <Menu.Item onClick={() => this.setState({ tileSelector: true })}>
                         <Image size="mini" src={(this.state.tileState.texture.length === 0) ? "" : this.props.map?.getTileset()?.getTextureURL(this.state.tileState)} />
                     </Menu.Item>
                     <Menu.Item icon="retweet" onClick={() => this.setState({ tileState: { ...this.state.tileState, rotation: this.state.tileState.rotation + 90 } })} />
+                    <Menu.Item position="right" style={{ cursor: "pointer" }} icon="eye" onPointerEnter={() => this.props.map?.revealMap(true)} onPointerLeave={() => this.props.map?.revealMap(false)} />
+
                     <Modal open={this.state.tileSelector} onClose={() => this.setState({ tileSelector: false })} closeOnDimmerClick={true} closeIcon="close">
                         <Modal.Header content="Tile Selector" />
                         <Modal.Content>
@@ -146,5 +162,25 @@ export class UI extends React.Component<IProperties, IState> {
                 </Grid.Column>
             );
         }) ?? [];
+    }
+
+    private getInteractionModeIcon(): string {
+        switch (this.state.mode) {
+            case InteractionMode.Normal:
+                return "edit outline";
+            case InteractionMode.Delete:
+                return "delete";
+        }
+    }
+
+    private switchInteractionMode(): void {
+        const modes = Object.keys(InteractionMode).filter((x) => isNaN(Number(x)));
+        let mode = this.state.mode;
+        mode++;
+        if (mode >= modes.length) {
+            mode = 0;
+        }
+        console.log(mode, modes);
+        this.setState({ mode });
     }
 }
