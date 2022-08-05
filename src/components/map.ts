@@ -1,5 +1,6 @@
-import { Application, Container, Graphics, Spritesheet, Texture } from "pixi.js";
+import { Application, Container, Graphics, Spritesheet } from "pixi.js";
 import { MapLayer } from "./map-layer";
+import { MapPanning } from "./map-panning";
 import { Tile, TileState } from "./tile";
 import { Tileset } from "./tileset";
 
@@ -17,9 +18,13 @@ export class Map {
     private grid: Graphics;
     private layers: MapLayer[];
 
+    private mapPanning: MapPanning;
+
     private activeLayer: number;
 
-    private onTileClickCallback?: (tile: Tile) => void;
+    private statesHistory: (TileState | undefined)[][][][] = [];
+
+    private onTileClickCallback?: (tile: Tile) => boolean;
 
     constructor(config: MapConfig) {
         this.config = config;
@@ -28,16 +33,17 @@ export class Map {
         this.grid = new Graphics();
         this.layers = [];
         this.activeLayer = 0;
+
+        this.mapPanning = new MapPanning(this, 2);
     }
 
     public async init(app: Application, tileset: Tileset): Promise<void> {
         this.app = app;
         this.tileset = tileset;
 
-        this.container.scale.set(1);
         this.container.pivot.set((this.config.width * 100) / 2, (this.config.height * 100) / 2);
         this.container.x = app.screen.width / 2;
-        this.container.y = (app.screen.height / 2);
+        this.container.y = app.screen.height / 2;
         this.app.stage.addChildAt(this.container, 0);
 
         this.grid.lineStyle(2, 0xEEEEEE);
@@ -46,19 +52,52 @@ export class Map {
                 this.grid.drawRect(x * 100, y * 100, 100, 100);
             }
         }
-        this.container.addChild(this.grid);
+        this.grid.lineStyle(2, 0xCC8888, 0.5);
+        this.grid.drawRect(0, 0, this.config.width * 100, this.config.height * 100);
+        this.container.addChildAt(this.grid, 0);
 
         this.layers = [ new MapLayer(this.config.width, this.config.height, 100, (tile: Tile) => this.onTileClick(tile))];
         this.activeLayer = 0;
         this.container.addChildAt(this.layers[0], 0);
 
-        const data = localStorage.getItem("last_states");
-        if (data) {
-            const states = JSON.parse(data) as TileState[][][];
-            if (states) {
-                this.load(states);
-            }
+        this.saveStates();
+
+        this.container.interactive = true;
+        this.container.addListener("pointerdown", () => this.mapPanning.startPanning());
+        this.container.addListener("pointerup", () => this.mapPanning.stopPanning());
+        this.container.addListener("pointercancel", () => this.mapPanning.stopPanning());
+        this.container.addListener("pointerupoutside", () => this.mapPanning.stopPanning());
+        this.container.addListener("pointermove", (e) => this.mapPanning.pan(e));
+    }
+
+    public enablePanning(enabled: boolean): void {
+        this.mapPanning.setEnabled(enabled);
+    }
+
+    public pan(x: number, y: number): void {
+        this.container.x += x;
+        this.container.y += y;
+
+        const calcBound = (size: number) => {
+            return ((size / 2) * 100) + 5;
+        };
+
+        if (this.container.x > calcBound(this.config.width)) {
+            this.container.x = calcBound(this.config.width);
+        } else if (this.container.x < -calcBound(this.config.width) + (this.app?.screen.width ?? 0)) {
+            this.container.x = -calcBound(this.config.width) + (this.app?.screen.width ?? 0);
         }
+
+        if (this.container.y > calcBound(this.config.height)) {
+            this.container.y = calcBound(this.config.height);
+        } else if (this.container.y < -calcBound(this.config.height) + (this.app?.screen.height ?? 0)) {
+            this.container.y = -calcBound(this.config.height) + (this.app?.screen.height ?? 0);
+        }
+    }
+
+    public resetPan(): void {
+        this.container.x = (this.app?.screen.width ?? 0) / 2;
+        this.container.y = (this.app?.screen.height ?? 0) / 2;
     }
 
     public changeTileset(spritesheet: Spritesheet): void {
@@ -70,7 +109,7 @@ export class Map {
         return this.tileset;
     }
 
-    public setOnTileClickCallback(callback: (tile: Tile) => void): void {
+    public setOnTileClickCallback(callback: (tile: Tile) => boolean): void {
         this.onTileClickCallback = callback;
     }
 
@@ -92,7 +131,7 @@ export class Map {
         const layer = this.createLayer();
         this.layers.splice(this.activeLayer, 0, layer);
         this.container.addChildAt(layer, this.activeLayer);
-        this.container.addChild(this.grid);
+        this.container.addChildAt(this.grid, 0);
         this.setActiveLayer(this.activeLayer);
     }
 
@@ -101,7 +140,7 @@ export class Map {
         this.activeLayer++;
         this.layers.splice(this.activeLayer, 0, layer);
         this.container.addChildAt(layer, this.activeLayer);
-        this.container.addChild(this.grid);
+        this.container.addChildAt(this.grid, 0);
         this.setActiveLayer(this.activeLayer);
     }
 
@@ -149,17 +188,20 @@ export class Map {
         this.layers.forEach((layer) => this.container.removeChild(layer));
         this.layers = [ new MapLayer(this.config.width, this.config.height, 100, (tile: Tile) => this.onTileClick(tile))];
         this.activeLayer = 0;
-        this.container.addChild(this.grid);
+        this.container.addChild(this.layers[0]);
+        this.container.addChildAt(this.grid, 0);
         this.setActiveLayer(this.activeLayer);
+        this.resetPan();
+        this.statesHistory = [];
+        this.saveStates();
     }
 
-    public save(): TileState[][][] {
+    public save(): (TileState | undefined)[][][] {
         const states = this.layers.map((layer) => layer.getTileStates());
-        localStorage.setItem("last_states", JSON.stringify(states));
         return states;
     }
 
-    public load(states: TileState[][][]): void {
+    public load(states: (TileState | undefined)[][][]): void {
         this.layers.forEach((layer) => this.container.removeChild(layer));
         this.layers = [];
         this.activeLayer = 0;
@@ -170,8 +212,23 @@ export class Map {
             this.container.addChild(layer);
         });
 
-        this.container.addChild(this.grid);
+        this.container.addChildAt(this.grid, 0);
         this.setActiveLayer(this.activeLayer);
+    }
+
+    public saveStates(): void {
+        const states = this.layers.map((layer) => layer.getTileStates());
+        this.statesHistory.push(states);
+        while (this.statesHistory.length > 100) {
+            this.statesHistory.shift();
+        }
+    }
+
+    public undo(): void {
+        if (this.statesHistory.length > 1) {
+            this.statesHistory.pop();
+            this.load(this.statesHistory[this.statesHistory.length - 1]);
+        }
     }
 
     public refresh(): void {
@@ -184,7 +241,10 @@ export class Map {
 
     private onTileClick(tile: Tile): void {
         if (this.onTileClickCallback) {
-            this.onTileClickCallback(tile);
+            const changed = this.onTileClickCallback(tile);
+            if (changed) {
+                this.saveStates();
+            }
         }
     }
 }

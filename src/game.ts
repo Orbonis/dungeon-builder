@@ -1,4 +1,4 @@
-import { Application, Container } from "pixi.js";
+import { Application, Container, Loader } from "pixi.js";
 import { update as TweenUpdate } from "@tweenjs/tween.js";
 import { LoadFonts } from "./utils/load-font";
 import { Tileset } from "./components/tileset";
@@ -15,7 +15,7 @@ export class Game {
 
     constructor() {
         this.tileset = new Tileset();
-        this.map = new Map({ height: 10, width: 15 });
+        this.map = new Map({ height: 100, width: 100 });
     }
 
     public async init(canvas: HTMLCanvasElement, width: number, height: number): Promise<Map> {
@@ -27,7 +27,9 @@ export class Game {
             transparent: true
         });
 
-        (window as any).__PIXI_INSPECTOR_GLOBAL_HOOK__ &&  (window as any).__PIXI_INSPECTOR_GLOBAL_HOOK__.register({ PIXI: PIXI });
+        try {
+            (window as any).__PIXI_INSPECTOR_GLOBAL_HOOK__ &&  (window as any).__PIXI_INSPECTOR_GLOBAL_HOOK__.register({ PIXI: PIXI });
+        } catch (e: any) {}
 
         try {
             await LoadFonts("Roboto Condensed");
