@@ -172,10 +172,13 @@ export class Map {
 
     public addLayerAbove(): void {
         const layer = this.createLayer();
+        if (this.activeLayer === this.layers.length - 1) {
+            this.layers.push(layer);
+        } else {
+            this.layers.splice(this.activeLayer + 1, 0, layer);
+        }
         this.activeLayer++;
-        this.layers.splice(this.activeLayer, 0, layer);
-        this.container.addChildAt(layer, this.activeLayer);
-        this.container.addChildAt(this.grid, 0);
+        this.refreshRenderOrder();
         this.setActiveLayer(this.activeLayer);
     }
 
@@ -260,6 +263,7 @@ export class Map {
         this.resetPan();
         this.statesHistory = [];
         this.saveStates();
+        this.refreshRenderOrder();
     }
 
     public save(): IMapSaveState {
@@ -286,16 +290,16 @@ export class Map {
             }
         }
 
-        this.container.addChildAt(this.grid, 0);
+        this.refreshRenderOrder();
         this.setActiveLayer(this.activeLayer);
     }
 
     public saveStates(): void {
-        const state = this.save();
-        this.statesHistory.push(state);
-        while (this.statesHistory.length > 100) {
-            this.statesHistory.shift();
-        }
+        // const state = this.save();
+        // this.statesHistory.push(state);
+        // while (this.statesHistory.length > 100) {
+        //     this.statesHistory.shift();
+        // }
     }
 
     public undo(): void {
@@ -352,5 +356,11 @@ export class Map {
         tile.graphic?.lineTo(45 - 10, -10);
         tile.graphic?.lineTo(45 - 10, 10);
         tile.graphic?.endFill();
+    }
+
+    private refreshRenderOrder(): void {
+        this.container.addChild(this.grid);
+        this.layers.forEach((layer) => this.container.addChild(layer));
+        this.collision.forEach((x) => x.forEach((y) => this.container.addChild(y.graphic!)));
     }
 }

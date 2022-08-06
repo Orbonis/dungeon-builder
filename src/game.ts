@@ -15,7 +15,7 @@ export class Game {
 
     constructor() {
         this.tileset = new Tileset();
-        this.map = new Map({ height: 10, width: 10 });
+        this.map = new Map({ height: 20, width: 20 });
     }
 
     public async init(canvas: HTMLCanvasElement, width: number, height: number): Promise<Map> {
