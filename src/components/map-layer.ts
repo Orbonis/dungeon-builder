@@ -17,13 +17,15 @@ export class MapLayer extends Container {
             this.highlights.push([]);
             for (let y = 0; y < height; y++) {
                 this.highlights[x].push(new Graphics());
-                this.highlights[x][y].x = x * 100;
-                this.highlights[x][y].y = y * 100;
+                this.highlights[x][y].x = x * tileSize;
+                this.highlights[x][y].y = y * tileSize;
                 this.highlights[x][y].lineStyle(2, 0xCC8888);
                 this.highlights[x][y].drawRect(0, 0, tileSize, tileSize);
                 this.highlights[x][y].visible = false;
 
                 this.tiles[x].push(new Tile(x, y, tileSize));
+                this.tiles[x][y].x = x * tileSize;
+                this.tiles[x][y].y = y * tileSize;
                 this.tiles[x][y].on("pointerdown", (e: InteractionEvent) => {
                     if (e.data.buttons === 1) {
                         onTileClick(this.tiles[x][y]);

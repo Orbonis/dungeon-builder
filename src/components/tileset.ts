@@ -62,7 +62,7 @@ export class Tileset {
 
     public getTextureURL(state: TileState): string | undefined {
         const tile = new Sprite();
-        ApplyTileState(tile, state, new Point(0, 0), this);
+        ApplyTileState(tile, state, 100, this);
         tile.anchor.set(0.5);
         tile.x = 0;
         tile.y = 0;

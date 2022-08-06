@@ -2,19 +2,19 @@ import { Point, Sprite, Texture } from "pixi.js";
 import { Tile, TileState } from "src/components/tile";
 import { Tileset } from "src/components/tileset";
 
-export function ApplyTileState(sprite: Sprite | Tile, state: TileState, coords: Point, tileset?: Tileset): void {
+export function ApplyTileState(tile: Sprite, state: TileState, tileSize: number, tileset?: Tileset): void {
     if (tileset) {
-        sprite.texture = (state.texture.length > 0) ? tileset.getTexture(state.texture) : Texture.WHITE;
+        tile.texture = (state.texture.length > 0) ? tileset.getTexture(state.texture) : Texture.WHITE;
     }
-    
-    sprite.x = (coords.x * sprite.width) + (sprite.width / 2) + state.offset.x;
-    sprite.y = (coords.y * sprite.height) + (sprite.height / 2) + state.offset.y;
-    sprite.alpha = state.alpha;
-    sprite.angle = state.rotation;
-    sprite.tint = state.tint;
+
+    tile.alpha = state.alpha;
+    tile.angle = state.rotation;
+    tile.tint = state.tint;
+    tile.x = (tileSize / 2) + state.offset.x;
+    tile.y = (tileSize / 2) + state.offset.y;
 
     if (state.texture === "") {
-        sprite.texture = Texture.WHITE;
-        sprite.alpha = 0;
+        tile.texture = Texture.WHITE;
+        tile.alpha = 0;
     }
 }
