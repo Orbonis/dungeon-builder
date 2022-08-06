@@ -191,7 +191,8 @@ export class UI extends React.Component<IProperties, IState> {
                         }} />
                     </Menu.Item>
                     <Menu.Item onClick={() => this.switchInteractionMode()} style={{ minWidth: "50pt" }}>
-                        <Icon name={this.getInteractionModeIcon()} size="big" fitted />
+                        <Icon name={this.getInteractionModeIcon()} size="big" fitted style={{ paddingRight: "5pt" }}/>
+                        { Object.keys(InteractionMode).filter((x) => isNaN(Number(x)))[this.state.mode] }
                     </Menu.Item>
                     <Menu.Item onClick={() => this.setState({ tileSelector: true })} style={{ minWidth: "50pt" }}>
                         <Image size="mini" src={(this.state.tileState.texture.length === 0) ? "" : this.props.map?.getTileset()?.getTextureURL(this.state.tileState)} />
