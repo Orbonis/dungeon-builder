@@ -315,7 +315,7 @@ export class UI extends React.Component<IProperties, IState> {
             if (file) {
                 const contents = await file.text();
                 try {
-                    this.props.map?.load(JSON.parse(contents));
+                    this.props.map?.load(JSON.parse(contents), true);
                     this.forceUpdate();
                 } catch (e) {
                     console.error(e);

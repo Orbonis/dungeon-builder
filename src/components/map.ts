@@ -392,8 +392,10 @@ export class Map {
         return { tiles, collision, events, playerLayer: this.playerLayerIndex };
     }
 
-    public load(state: IMapSaveState): void {
-        this.resize(state.tiles[0].length, state.tiles[0][0].length);
+    public load(state: IMapSaveState, hard: boolean = false): void {
+        if (hard) {
+            this.resize(state.tiles[0].length, state.tiles[0][0].length);
+        }
         this.layers.forEach((layer) => this.container.removeChild(layer));
         this.layers = [];
         this.activeLayer = 0;
@@ -419,6 +421,10 @@ export class Map {
             this.playerLayerIndex = state.playerLayer;
         }
 
+        if (hard) {
+            this.statesHistory = [];
+            this.updateHistory();
+        }
         this.redrawEventTiles();
         this.refreshRenderOrder();
         this.setActiveLayer(this.activeLayer);
