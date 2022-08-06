@@ -27,6 +27,7 @@ export interface IMapSaveState {
     tiles: (TileState | undefined)[][][];
     collision: CollisionTile[][];
     events: EventTile[][];
+    playerLayer: number;
 }
 
 export class Map {
@@ -39,6 +40,9 @@ export class Map {
     private layers: MapLayer[];
     private collision: CollisionTile[][];
     private events: EventTile[][];
+
+    private playerLayer: Container;
+    private playerLayerIndex: number;
 
     private mapPanning: MapPanning;
 
@@ -57,6 +61,8 @@ export class Map {
         this.collision = [];
         this.events = [];
         this.activeLayer = 0;
+        this.playerLayer = new Container();
+        this.playerLayerIndex = 0;
 
         this.mapPanning = new MapPanning(this, 2);
     }
@@ -83,6 +89,8 @@ export class Map {
         const layer = this.createLayer();
         this.layers.push(layer);
         this.container.addChild(layer);
+
+        this.container.addChild(this.playerLayer);
 
         for (let x = 0; x < this.config.width; x++) {
             this.collision.push([]);
@@ -317,6 +325,15 @@ export class Map {
         this.redrawEventTiles();
     }
 
+    public isPlayerLayer(): boolean {
+        return this.playerLayerIndex === this.activeLayer;
+    }
+
+    public setPlayerLayer(): void {
+        this.playerLayerIndex = this.activeLayer;
+        this.refreshRenderOrder();
+    }
+
     public new(): void {
         this.layers.forEach((layer) => this.container.removeChild(layer));
         this.layers = [ new MapLayer(this.config.width, this.config.height, 100, (tile: Tile) => this.onTileClick(tile))];
@@ -334,7 +351,7 @@ export class Map {
         const tiles = this.layers.map((layer) => layer.getTileStates().map((x) => x.map((y) => y?.texture === "" ? undefined : y)));
         const collision = this.collision.map((x) => x.map((y) => ({ ...y, graphic: undefined })));
         const events = this.events.map((x) => x.map((y) => ({ ...y, text: undefined })));
-        return { tiles, collision, events };
+        return { tiles, collision, events, playerLayer: this.playerLayerIndex };
     }
 
     public load(state: IMapSaveState): void {
@@ -357,6 +374,10 @@ export class Map {
                     this.events[x][y] = { ...state.events[x][y], text: this.events[x][y].text };
                 }
             }
+        }
+
+        if (state.playerLayer !== undefined) {
+            this.playerLayerIndex = state.playerLayer;
         }
 
         this.redrawEventTiles();
@@ -432,7 +453,12 @@ export class Map {
 
     private refreshRenderOrder(): void {
         this.container.addChild(this.grid);
-        this.layers.forEach((layer) => this.container.addChild(layer));
+        this.layers.forEach((layer, index) => {
+            this.container.addChild(layer);
+            if (index === this.playerLayerIndex) {
+                this.container.addChild(this.playerLayer);
+            }
+        });
         this.collision.forEach((x) => x.forEach((y) => this.container.addChild(y.graphic!)));
         this.events.forEach((x) => x.forEach((y) => this.container.addChild(y.text!)));
     }

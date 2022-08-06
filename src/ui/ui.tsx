@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Dropdown, Grid, Icon, Image, Input, Menu, Modal, SemanticICONS } from "semantic-ui-react";
+import { Checkbox, Container, Dropdown, Grid, Icon, Image, Input, Menu, Modal, SemanticICONS } from "semantic-ui-react";
 import { Map } from "src/components/map";
 import { saveAs } from "file-saver";
 import fileDialog from "file-dialog";
@@ -259,6 +259,14 @@ export class UI extends React.Component<IProperties, IState> {
                     </Menu.Item>
 
                     <Menu.Menu position="right">
+                        <Menu.Item style={{ minWidth: "50pt" }}>
+                            <Checkbox checked={this.props.map?.isPlayerLayer() ?? false} label="Player Layer" onChange={(e, d) => {
+                                if (d.checked) {
+                                    this.props.map?.setPlayerLayer();
+                                    this.forceUpdate();
+                                }
+                            }} />
+                        </Menu.Item>
                         <Menu.Item onClick={() => this.props.map?.undo()} style={{ minWidth: "50pt" }}>
                             <Icon name="undo" size="big" fitted />
                         </Menu.Item>
