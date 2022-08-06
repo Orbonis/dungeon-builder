@@ -3,7 +3,7 @@ import { Checkbox, Container, Dropdown, Grid, Icon, Image, Input, Menu, Modal, S
 import { Map } from "src/components/map";
 import { saveAs } from "file-saver";
 import fileDialog from "file-dialog";
-import { Spritesheet, Texture } from "pixi.js";
+import { Point, Spritesheet, Texture } from "pixi.js";
 import { Tile, TileState } from "src/components/tile";
 
 enum InteractionMode {
@@ -203,10 +203,7 @@ export class UI extends React.Component<IProperties, IState> {
                     </Menu.Item>
                     <Dropdown item text="File">
                         <Dropdown.Menu>
-                            <Dropdown.Item icon="file outline" content="New" onClick={() => {
-                                this.props.map?.new();
-                                this.forceUpdate();
-                            }} />
+                            <Dropdown.Item icon="file outline" content="New" onClick={() => this.new()} />
                             <Dropdown.Item icon="save" content="Save" onClick={() => this.save()} />
                             <Dropdown.Item icon="folder open outline" content="Open" onClick={() => this.open()}/>
                             <Dropdown.Item icon="images outline" content="Open Tileset" onClick={() => this.openTileset()}/>
@@ -289,6 +286,17 @@ export class UI extends React.Component<IProperties, IState> {
                 </Menu>
             </Container>
         );
+    }
+
+    private new(): void {
+        if (this.props.map) {
+            this.getMapSize(this.props.map.getConfig().width, this.props.map.getConfig().height).then((size) => {
+                if (size) {
+                    this.props.map?.new(size.width, size.height);
+                    this.forceUpdate();
+                }
+            });
+        }
     }
 
     private save(): void {
@@ -381,6 +389,22 @@ export class UI extends React.Component<IProperties, IState> {
         return new Promise((resolve) => {
             const event = window.prompt("Enter an event id:", defaultEvent ?? "");
             resolve(event ?? "");
+        });
+    }
+
+    private getMapSize(width?: number, height?: number): Promise<{ width: number, height: number } | null> {
+        return new Promise(async (resolve) => {
+            const size = window.prompt("Choose a map size (WIDTHxHEIGHT)", `${width ?? 5}x${height ?? 5}`);
+            const values: number[] | undefined = size?.split("x").map((x) => Number(x));
+            if (size) {
+                if (values && values.length === 2 && !values.some((x) => isNaN(x))) {
+                    resolve({ width: values[0], height: values[1] });
+                } else {
+                    resolve(await this.getMapSize(width, height));
+                }
+            } else {
+                resolve(null)
+            }
         });
     }
 }

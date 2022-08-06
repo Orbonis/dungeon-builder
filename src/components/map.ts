@@ -1,3 +1,4 @@
+import { clone } from "lodash";
 import { Application, Container, Graphics, Spritesheet, Text } from "pixi.js";
 import { MapLayer } from "./map-layer";
 import { MapPanning } from "./map-panning";
@@ -71,19 +72,10 @@ export class Map {
         this.app = app;
         this.tileset = tileset;
 
-        this.container.pivot.set((this.config.width * 100) / 2, (this.config.height * 100) / 2);
         this.container.x = app.screen.width / 2;
         this.container.y = app.screen.height / 2;
         this.app.stage.addChildAt(this.container, 0);
 
-        this.grid.lineStyle(2, 0xEEEEEE);
-        for (let x = 0; x < this.config.width; x++) {
-            for (let y = 0; y < this.config.height; y++) {
-                this.grid.drawRect(x * 100, y * 100, 100, 100);
-            }
-        }
-        this.grid.lineStyle(2, 0xCC8888, 0.5);
-        this.grid.drawRect(0, 0, this.config.width * 100, this.config.height * 100);
         this.container.addChild(this.grid);
 
         const layer = this.createLayer();
@@ -92,6 +84,56 @@ export class Map {
 
         this.container.addChild(this.playerLayer);
 
+        this.resize(this.config.width, this.config.height);
+
+        this.updateHistory();
+
+        this.container.interactive = true;
+        this.container.addListener("pointerdown", () => this.mapPanning.startPanning());
+        this.container.addListener("pointerup", () => this.mapPanning.stopPanning());
+        this.container.addListener("pointercancel", () => this.mapPanning.stopPanning());
+        this.container.addListener("pointerupoutside", () => this.mapPanning.stopPanning());
+        this.container.addListener("pointermove", (e) => this.mapPanning.pan(e));
+
+        (window as any).resize = (width: number, height: number) => this.resize(width, height);
+    }
+
+    public resize(width: number, height: number): void {
+        this.config.width = width;
+        this.config.height = height;
+
+        this.container.pivot.set((this.config.width * 100) / 2, (this.config.height * 100) / 2);
+
+        this.grid.clear();
+        this.grid.lineStyle(2, 0xEEEEEE);
+        for (let x = 0; x < this.config.width; x++) {
+            for (let y = 0; y < this.config.height; y++) {
+                this.grid.drawRect(x * 100, y * 100, 100, 100);
+            }
+        }
+        this.grid.lineStyle(2, 0xCC8888, 0.5);
+        this.grid.drawRect(0, 0, this.config.width * 100, this.config.height * 100);
+
+        this.collision.forEach((x) => x.forEach((y) => {
+            if (y.graphic) {
+                y.graphic.destroy();
+                if (y.graphic.parent) {
+                    y.graphic.parent.removeChild(y.graphic);
+                }
+            }
+        }));
+        this.collision = [];
+        this.events.forEach((x) => x.forEach((y) => {
+            if (y.text) {
+                y.text.destroy();
+                if (y.text.parent) {
+                    y.text.parent.removeChild(y.text);
+                }
+            }
+        }));
+
+        this.collision = [];
+        this.events = [];
         for (let x = 0; x < this.config.width; x++) {
             this.collision.push([]);
             this.events.push([]);
@@ -123,14 +165,19 @@ export class Map {
             }
         }
 
-        this.updateHistory();
+        this.layers.forEach((layer) => this.container.removeChild(layer));
+        this.layers = [];
+        this.activeLayer = 0;
+        this.layers.push(this.createLayer());
 
-        this.container.interactive = true;
-        this.container.addListener("pointerdown", () => this.mapPanning.startPanning());
-        this.container.addListener("pointerup", () => this.mapPanning.stopPanning());
-        this.container.addListener("pointercancel", () => this.mapPanning.stopPanning());
-        this.container.addListener("pointerupoutside", () => this.mapPanning.stopPanning());
-        this.container.addListener("pointermove", (e) => this.mapPanning.pan(e));
+        this.statesHistory = [];
+        this.resetPan();
+        this.refreshRenderOrder();
+        this.updateHistory();
+    }
+
+    public getConfig(): MapConfig {
+        return clone(this.config);
     }
 
     public enablePanning(enabled: boolean): void {
@@ -334,17 +381,8 @@ export class Map {
         this.refreshRenderOrder();
     }
 
-    public new(): void {
-        this.layers.forEach((layer) => this.container.removeChild(layer));
-        this.layers = [ new MapLayer(this.config.width, this.config.height, 100, (tile: Tile) => this.onTileClick(tile))];
-        this.activeLayer = 0;
-        this.container.addChild(this.layers[0]);
-        this.container.addChildAt(this.grid, 0);
-        this.setActiveLayer(this.activeLayer);
-        this.resetPan();
-        this.statesHistory = [];
-        this.updateHistory();
-        this.refreshRenderOrder();
+    public new(width?: number, height?: number): void {
+        this.resize(width ?? this.config.width, height ?? this.config.height);
     }
 
     public save(): IMapSaveState {
@@ -355,6 +393,7 @@ export class Map {
     }
 
     public load(state: IMapSaveState): void {
+        this.resize(state.tiles[0].length, state.tiles[0][0].length);
         this.layers.forEach((layer) => this.container.removeChild(layer));
         this.layers = [];
         this.activeLayer = 0;
