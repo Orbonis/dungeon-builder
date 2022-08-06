@@ -7,9 +7,10 @@ import { Spritesheet, Texture } from "pixi.js";
 import { Tile, TileState } from "src/components/tile";
 
 enum InteractionMode {
-    Normal = 0,
+    Paint = 0,
     Delete,
     Collision,
+    Events,
     Pan
 }
 
@@ -50,8 +51,8 @@ export class UI extends React.Component<IProperties, IState> {
                 scale: 1,
                 tint: 0xFFFFFF
             },
-            mode: InteractionMode.Normal,
-            lastMode: InteractionMode.Normal
+            mode: InteractionMode.Paint,
+            lastMode: InteractionMode.Paint
         };
 
         document.addEventListener("contextmenu", (ev) => ev.preventDefault());
@@ -87,7 +88,7 @@ export class UI extends React.Component<IProperties, IState> {
                     }
                     break;
             }
-            if (this.state.mode === InteractionMode.Normal) {
+            if (this.state.mode === InteractionMode.Paint) {
                 if (this.inputState.leftMouseDown) {
                     switch (ev.key) {
                         case "ArrowUp":
@@ -169,11 +170,18 @@ export class UI extends React.Component<IProperties, IState> {
 
             this.props.map.setOnTileClickCallback((tile: Tile) => {
                 switch (this.state.mode) {
-                    case InteractionMode.Normal:
-                        tile.setState(this.state.tileState, this.props.map?.getTileset());
+                    case InteractionMode.Paint:
+                        const { texture, tint } = this.state.tileState;
+                        tile.setState({ texture, tint }, this.props.map?.getTileset());
                         return true;
                     case InteractionMode.Delete:
                         tile.clear();
+                        return true;
+                    case InteractionMode.Events:
+                        const coords = tile.getCoords();
+                        this.getEventInput(this.props.map?.getEvent(coords.x, coords.y)).then((event: string) => {
+                            this.props.map?.setEvent(coords.x, coords.y, event);
+                        });
                         return true;
                 }
 
@@ -182,6 +190,7 @@ export class UI extends React.Component<IProperties, IState> {
 
             this.props.map.enablePanning(this.state.mode === InteractionMode.Pan);
             this.props.map.showCollisionDebug(this.state.mode === InteractionMode.Collision);
+            this.props.map.showEventDebug(this.state.mode === InteractionMode.Events);
         }
     }
 
@@ -223,7 +232,7 @@ export class UI extends React.Component<IProperties, IState> {
                         <Dropdown.Menu>
                             {
                                 new Array(this.props.map?.getLayerCount() ?? 1).fill(0).map((x, i) => {
-                                    return <Dropdown.Item active={i === this.props.map?.getActiveLayer() ?? 0} content={`Layer ${i.toString()}`} onClick={() => {
+                                    return <Dropdown.Item key={`layer-option-${i}`} active={i === this.props.map?.getActiveLayer() ?? 0} content={`Layer ${i.toString()}`} onClick={() => {
                                         this.props.map?.setActiveLayer(i);
                                         this.forceUpdate();
                                     }}/>;
@@ -235,7 +244,7 @@ export class UI extends React.Component<IProperties, IState> {
                         <Dropdown.Menu>
                             {
                                 this.getInteractionModes().map((x, i) => {
-                                    return <Dropdown.Item active={i === this.state.mode} content={x} onClick={() => {
+                                    return <Dropdown.Item key={`tool-option-${x}`} active={i === this.state.mode} content={x} onClick={() => {
                                         this.setState({ mode: i });
                                     }}/>;
                                 })
@@ -247,9 +256,6 @@ export class UI extends React.Component<IProperties, IState> {
                     </Menu.Item>
                     <Menu.Item onClick={() => this.openColourPicker()} style={{ minWidth: "50pt" }}>
                         <Icon name="paint brush" size="big" fitted color="blue" />
-                    </Menu.Item>
-                    <Menu.Item onClick={() => this.setState({ tileState: { ...this.state.tileState, rotation: this.state.tileState.rotation + 90 } })} style={{ minWidth: "50pt" }}>
-                        <Icon name="retweet" size="big" fitted />
                     </Menu.Item>
 
                     <Menu.Menu position="right">
@@ -360,6 +366,13 @@ export class UI extends React.Component<IProperties, IState> {
                 tileState.tint = Number(input.value.replace("#", "0x"));
                 this.setState({ tileState });
             }, 100);
+        });
+    }
+
+    private getEventInput(defaultEvent?: string): Promise<string> {
+        return new Promise((resolve) => {
+            const event = window.prompt("Enter an event id:", defaultEvent ?? "");
+            resolve(event ?? "");
         });
     }
 }

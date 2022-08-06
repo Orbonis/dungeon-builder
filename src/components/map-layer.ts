@@ -71,7 +71,7 @@ export class MapLayer extends Container {
         }
     }
 
-    public getTileStates(): (TileState | undefined)[][] {
+    public getTileStates(): TileState[][] {
         return this.tiles.map((tiles) => tiles.map((tile) => tile.getState()));
     }
 

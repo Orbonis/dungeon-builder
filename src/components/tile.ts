@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { Container, Point, Rectangle, Sprite, Texture } from "pixi.js";
+import { Container, Point, Rectangle, Sprite, Text, TextStyle, Texture } from "pixi.js";
 import { ApplyTileState } from "src/utils/tile-utils";
 import { Tileset } from "./tileset";
 
@@ -31,8 +31,8 @@ export class Tile extends Container {
         };
 
         this.sprite = new Sprite();
-        this.sprite.x = 50;
-        this.sprite.y = 50;
+        this.sprite.x = size / 2;
+        this.sprite.y = size / 2;
         this.addChild(this.sprite);
 
         this.coords = new Point(x, y);
@@ -41,7 +41,7 @@ export class Tile extends Container {
         this.interactive = true;
         this.interactiveChildren = false;
         this.buttonMode = true;
-        this.hitArea = new Rectangle(0, 0, 100, 100);
+        this.hitArea = new Rectangle(0, 0, size, size);
 
         this.sprite.width = size;
         this.sprite.height = size;
@@ -59,12 +59,8 @@ export class Tile extends Container {
         super.updateTransform();
     }
 
-    public getState(): TileState | undefined {
-        if (this.state.texture === "") {
-            return undefined;
-        } else {
-            return this.state;
-        }
+    public getState(): TileState {
+        return this.state;
     }
 
     public clear(): void {

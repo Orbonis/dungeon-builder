@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, Spritesheet } from "pixi.js";
+import { Application, Container, Graphics, Spritesheet, Text } from "pixi.js";
 import { MapLayer } from "./map-layer";
 import { MapPanning } from "./map-panning";
 import { Tile, TileState } from "./tile";
@@ -18,9 +18,15 @@ export interface CollisionTile {
     west: boolean;
 }
 
+export interface EventTile {
+    text?: Text;
+    id: string;
+}
+
 export interface IMapSaveState {
     tiles: (TileState | undefined)[][][];
     collision: CollisionTile[][];
+    events: EventTile[][];
 }
 
 export class Map {
@@ -32,6 +38,7 @@ export class Map {
     private grid: Graphics;
     private layers: MapLayer[];
     private collision: CollisionTile[][];
+    private events: EventTile[][];
 
     private mapPanning: MapPanning;
 
@@ -48,6 +55,7 @@ export class Map {
         this.grid = new Graphics();
         this.layers = [];
         this.collision = [];
+        this.events = [];
         this.activeLayer = 0;
 
         this.mapPanning = new MapPanning(this, 2);
@@ -78,20 +86,32 @@ export class Map {
 
         for (let x = 0; x < this.config.width; x++) {
             this.collision.push([]);
+            this.events.push([]);
             for (let y = 0; y < this.config.height; y++) {
-                const tile: CollisionTile = {
+                const collision: CollisionTile = {
                     graphic: new Graphics(),
                     north: true,
                     south: true,
                     east: true,
                     west: true
                 };
-                tile.graphic!.x = (x * 100) + 50;
-                tile.graphic!.y = (y * 100) + 50;
-                tile.graphic!.visible = false;
-                this.redrawCollisionTile(tile);
-                this.collision[x].push(tile);
-                this.container.addChild(tile.graphic!);
+                collision.graphic!.x = (x * 100) + 50;
+                collision.graphic!.y = (y * 100) + 50;
+                collision.graphic!.visible = false;
+                this.redrawCollisionTile(collision);
+                this.collision[x].push(collision);
+                this.container.addChild(collision.graphic!);
+
+                const event: EventTile = {
+                    text: new Text("", { fontSize: "14pt", fill: "#FF0000", stroke: "#FFFFFF", strokeThickness: 2 }),
+                    id: ""
+                };
+                event.text!.x = (x * 100) + 50;
+                event.text!.y = (y * 100) + 50;
+                event.text!.anchor.set(0.5);
+                event.text!.visible = false;
+                this.events[x].push(event);
+                this.container.addChild(event.text!);
             }
         }
 
@@ -265,6 +285,14 @@ export class Map {
         }));
     }
 
+    public showEventDebug(visible: boolean): void {
+        this.events.forEach((x) => x.forEach((y) => {
+            if (y.text) {
+                y.text.visible = visible;
+            }
+        }))
+    }
+
     public toggleCollisionOnHighlightedTile(direction: "north" | "south" | "east" | "west"): void {
         const tile = this.layers[this.activeLayer].getHighlightedTile();
         if (tile) {
@@ -278,6 +306,15 @@ export class Map {
 
     public setTileState(tile: Tile, state: Partial<TileState>): void {
         tile.setState(state, this.tileset);
+    }
+
+    public getEvent(x: number, y: number): string {
+        return this.events[x][y].id;
+    }
+
+    public setEvent(x: number, y: number, id: string): void {
+        this.events[x][y].id = id;
+        this.redrawEventTiles();
     }
 
     public new(): void {
@@ -294,9 +331,10 @@ export class Map {
     }
 
     public save(): IMapSaveState {
-        const tiles = this.layers.map((layer) => layer.getTileStates());
+        const tiles = this.layers.map((layer) => layer.getTileStates().map((x) => x.map((y) => y?.texture === "" ? undefined : y)));
         const collision = this.collision.map((x) => x.map((y) => ({ ...y, graphic: undefined })));
-        return { tiles, collision };
+        const events = this.events.map((x) => x.map((y) => ({ ...y, text: undefined })));
+        return { tiles, collision, events };
     }
 
     public load(state: IMapSaveState): void {
@@ -314,9 +352,14 @@ export class Map {
             for (let y = 0; y < this.config.height; y++) {
                 this.collision[x][y] = { ...state.collision[x][y], graphic: this.collision[x][y].graphic };
                 this.redrawCollisionTile(this.collision[x][y]);
+
+                if (state.events) {
+                    this.events[x][y] = { ...state.events[x][y], text: this.events[x][y].text };
+                }
             }
         }
 
+        this.redrawEventTiles();
         this.refreshRenderOrder();
         this.setActiveLayer(this.activeLayer);
     }
@@ -391,5 +434,10 @@ export class Map {
         this.container.addChild(this.grid);
         this.layers.forEach((layer) => this.container.addChild(layer));
         this.collision.forEach((x) => x.forEach((y) => this.container.addChild(y.graphic!)));
+        this.events.forEach((x) => x.forEach((y) => this.container.addChild(y.text!)));
+    }
+
+    private redrawEventTiles(): void {
+        this.events.forEach((x) => x.forEach((y) => y.text!.text = y.id));
     }
 }
