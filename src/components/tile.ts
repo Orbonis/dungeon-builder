@@ -1,3 +1,4 @@
+import { cloneDeep } from "lodash";
 import { Graphics, Loader, Point, Rectangle, Sprite, Text, Texture } from "pixi.js";
 import { ApplyTileState } from "src/utils/tile-utils";
 import { Tileset } from "./tileset";
@@ -38,7 +39,7 @@ export class Tile extends Sprite {
     }
 
     public setState(state: Partial<TileState>, tileset?: Tileset): void {
-        this.state = { ...this.state, ...state };
+        this.state = cloneDeep({ ...this.state, ...state });
         ApplyTileState(this, this.state, this.coords, tileset);
         super.updateTransform();
     }

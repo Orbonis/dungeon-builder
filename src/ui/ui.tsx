@@ -23,7 +23,17 @@ interface IState {
     lastMode: InteractionMode;
 }
 
+interface IInputState {
+    mouseDown: boolean;
+    offsetChanged: boolean;
+}
+
 export class UI extends React.Component<IProperties, IState> {
+    private inputState: IInputState = {
+        mouseDown: false,
+        offsetChanged: false
+    };
+
     constructor(props: IProperties) {
         super(props);
 
@@ -40,6 +50,22 @@ export class UI extends React.Component<IProperties, IState> {
             lastMode: InteractionMode.Normal
         };
 
+        document.addEventListener("pointerdown", (ev: PointerEvent) => {
+            if (ev.button === 0) {
+                this.inputState.mouseDown = true;
+            }
+        });
+
+        document.addEventListener("pointerup", (ev: PointerEvent) => {
+            if (ev.button === 0) {
+                this.inputState.mouseDown = false;
+                if (this.inputState.offsetChanged) {
+                    this.inputState.offsetChanged = false;
+                    this.props.map?.saveStates();
+                }
+            }
+        });
+
         document.addEventListener("keydown", (ev: KeyboardEvent) => {
             switch (ev.key) {
                 case " ":
@@ -50,19 +76,25 @@ export class UI extends React.Component<IProperties, IState> {
                     break;
             }
             if (this.state.mode === InteractionMode.Normal) {
-                switch (ev.key) {
-                    case "ArrowUp":
-                        this.props.map?.nudgeHighlightedTile(0, -1);
-                        break;
-                    case "ArrowDown":
-                        this.props.map?.nudgeHighlightedTile(0, 1);
-                        break;
-                    case "ArrowLeft":
-                        this.props.map?.nudgeHighlightedTile(-1, 0);
-                        break;
-                    case "ArrowRight":
-                        this.props.map?.nudgeHighlightedTile(1, 0);
-                        break;
+                if (this.inputState.mouseDown) {
+                    switch (ev.key) {
+                        case "ArrowUp":
+                            this.props.map?.nudgeHighlightedTile(0, -1);
+                            this.inputState.offsetChanged = true;
+                            break;
+                        case "ArrowDown":
+                            this.props.map?.nudgeHighlightedTile(0, 1);
+                            this.inputState.offsetChanged = true;
+                            break;
+                        case "ArrowLeft":
+                            this.props.map?.nudgeHighlightedTile(-1, 0);
+                            this.inputState.offsetChanged = true;
+                            break;
+                        case "ArrowRight":
+                            this.props.map?.nudgeHighlightedTile(1, 0);
+                            this.inputState.offsetChanged = true;
+                            break;
+                    }
                 }
             }
         });

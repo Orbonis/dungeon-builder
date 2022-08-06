@@ -54,11 +54,11 @@ export class Map {
         }
         this.grid.lineStyle(2, 0xCC8888, 0.5);
         this.grid.drawRect(0, 0, this.config.width * 100, this.config.height * 100);
-        this.container.addChildAt(this.grid, 0);
+        this.container.addChild(this.grid);
 
-        this.layers = [ new MapLayer(this.config.width, this.config.height, 100, (tile: Tile) => this.onTileClick(tile))];
-        this.activeLayer = 0;
-        this.container.addChildAt(this.layers[0], 0);
+        const layer = this.createLayer();
+        this.layers = [ layer ];
+        this.container.addChild(layer);
 
         this.saveStates();
 
