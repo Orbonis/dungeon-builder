@@ -122,6 +122,12 @@ export class UI extends React.Component<IProperties, IState> {
                             this.props.map?.rotateHighlightedTile(1);
                             break;
                     }
+                } else {
+                    switch (ev.key) {
+                        case "Delete":
+                            this.props.map?.clearHighlightedTile();
+                            break;
+                    }
                 }
             }
 
@@ -188,7 +194,10 @@ export class UI extends React.Component<IProperties, IState> {
                     </Menu.Item>
                     <Dropdown item text="File">
                         <Dropdown.Menu>
-                            <Dropdown.Item icon="file outline" content="New" onClick={() => this.props.map?.new()} />
+                            <Dropdown.Item icon="file outline" content="New" onClick={() => {
+                                this.props.map?.new();
+                                this.forceUpdate();
+                            }} />
                             <Dropdown.Item icon="save" content="Save" onClick={() => this.save()} />
                             <Dropdown.Item icon="folder open outline" content="Open" onClick={() => this.open()}/>
                             <Dropdown.Item icon="images outline" content="Open Tileset" onClick={() => this.openTileset()}/>
@@ -210,18 +219,34 @@ export class UI extends React.Component<IProperties, IState> {
                     </Dropdown>
                 </Menu>
                 <Menu key="tools-menu" style={{ minHeight: "50pt" }}>
-                    <Menu.Item style={{ minWidth: "50pt" }}>
-                        <Input type="number" value={this.props.map?.getActiveLayer() ?? 0} style={{ maxWidth: "45pt" }} onChange={(e, d) => {
-                            this.props.map?.setActiveLayer(Number(d.value));
-                            this.forceUpdate();
-                        }} />
-                    </Menu.Item>
-                    <Menu.Item onClick={() => this.switchInteractionMode()} style={{ minWidth: "50pt" }}>
-                        <Icon name={this.getInteractionModeIcon()} size="big" fitted style={{ paddingRight: "5pt" }}/>
-                        { Object.keys(InteractionMode).filter((x) => isNaN(Number(x)))[this.state.mode] }
-                    </Menu.Item>
+                    <Dropdown item text={`Layer ${this.props.map?.getActiveLayer() ?? 0}`}>
+                        <Dropdown.Menu>
+                            {
+                                new Array(this.props.map?.getLayerCount() ?? 1).fill(0).map((x, i) => {
+                                    return <Dropdown.Item active={i === this.props.map?.getActiveLayer() ?? 0} content={`Layer ${i.toString()}`} onClick={() => {
+                                        this.props.map?.setActiveLayer(i);
+                                        this.forceUpdate();
+                                    }}/>;
+                                })
+                            }
+                        </Dropdown.Menu>
+                    </Dropdown>
+                    <Dropdown item text={`Tool: ${this.getInteractionModes()[this.state.mode]}`}>
+                        <Dropdown.Menu>
+                            {
+                                this.getInteractionModes().map((x, i) => {
+                                    return <Dropdown.Item active={i === this.state.mode} content={x} onClick={() => {
+                                        this.setState({ mode: i });
+                                    }}/>;
+                                })
+                            }
+                        </Dropdown.Menu>
+                    </Dropdown>
                     <Menu.Item onClick={() => this.setState({ tileSelector: true })} style={{ minWidth: "50pt" }}>
                         <Image size="mini" src={(this.state.tileState.texture.length === 0) ? "" : this.props.map?.getTileset()?.getTextureURL(this.state.tileState)} />
+                    </Menu.Item>
+                    <Menu.Item onClick={() => this.openColourPicker()} style={{ minWidth: "50pt" }}>
+                        <Icon name="paint brush" size="big" fitted color="blue" />
                     </Menu.Item>
                     <Menu.Item onClick={() => this.setState({ tileState: { ...this.state.tileState, rotation: this.state.tileState.rotation + 90 } })} style={{ minWidth: "50pt" }}>
                         <Icon name="retweet" size="big" fitted />
@@ -269,6 +294,7 @@ export class UI extends React.Component<IProperties, IState> {
                 const contents = await file.text();
                 try {
                     this.props.map?.load(JSON.parse(contents));
+                    this.forceUpdate();
                 } catch (e) {
                     console.error(e);
                 }
@@ -314,26 +340,26 @@ export class UI extends React.Component<IProperties, IState> {
         }) ?? [];
     }
 
-    private getInteractionModeIcon(): SemanticICONS {
-        switch (this.state.mode) {
-            case InteractionMode.Normal:
-                return "edit outline";
-            case InteractionMode.Delete:
-                return "delete";
-            case InteractionMode.Pan:
-                return "hand paper outline";
-            case InteractionMode.Collision:
-                return "exchange";
-        }
+    private getInteractionModes(): string[] {
+        return Object.keys(InteractionMode).filter((x) => isNaN(Number(x)));
     }
 
-    private switchInteractionMode(): void {
-        const modes = Object.keys(InteractionMode).filter((x) => isNaN(Number(x)));
-        let mode = this.state.mode;
-        mode++;
-        if (mode >= modes.length) {
-            mode = 0;
-        }
-        this.setState({ mode });
+    private openColourPicker(): void {
+        const input = document.createElement("input") as HTMLInputElement;
+        input.id = "color-picker";
+        input.type = "color";
+        input.click();
+        let timeout: number | undefined;
+        input.addEventListener("input", (ev: Event) => {
+            if (timeout) {
+                window.clearTimeout(timeout);
+                timeout = undefined;
+            }
+            timeout = window.setTimeout(() => {
+                const tileState = this.state.tileState;
+                tileState.tint = Number(input.value.replace("#", "0x"));
+                this.setState({ tileState });
+            }, 100);
+        });
     }
 }

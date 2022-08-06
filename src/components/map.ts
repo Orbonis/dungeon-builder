@@ -252,6 +252,11 @@ export class Map {
         }
     }
 
+    public clearHighlightedTile(): void {
+        const tile = this.layers[this.activeLayer].getHighlightedTile();
+        tile?.clear();
+    }
+
     public showCollisionDebug(visible: boolean): void {
         this.collision.forEach((x) => x.forEach((y) => {
             if (y.graphic) {
