@@ -25,13 +25,15 @@ interface IState {
 }
 
 interface IInputState {
-    mouseDown: boolean;
+    leftMouseDown: boolean;
+    rightMouseDown: boolean;
     offsetChanged: boolean;
 }
 
 export class UI extends React.Component<IProperties, IState> {
     private inputState: IInputState = {
-        mouseDown: false,
+        leftMouseDown: false,
+        rightMouseDown: false,
         offsetChanged: false
     };
 
@@ -45,25 +47,34 @@ export class UI extends React.Component<IProperties, IState> {
                 alpha: 1,
                 offset: { x: 0, y: 0 },
                 rotation: 0,
+                scale: 1,
                 tint: 0xFFFFFF
             },
             mode: InteractionMode.Normal,
             lastMode: InteractionMode.Normal
         };
 
+        document.addEventListener("contextmenu", (ev) => ev.preventDefault());
+
         document.addEventListener("pointerdown", (ev: PointerEvent) => {
             if (ev.button === 0) {
-                this.inputState.mouseDown = true;
+                this.inputState.leftMouseDown = true;
+            } else if (ev.button === 2) {
+                this.inputState.rightMouseDown = true;
+                ev.preventDefault();
             }
         });
 
         document.addEventListener("pointerup", (ev: PointerEvent) => {
             if (ev.button === 0) {
-                this.inputState.mouseDown = false;
+                this.inputState.leftMouseDown = false;
                 if (this.inputState.offsetChanged) {
                     this.inputState.offsetChanged = false;
                     this.props.map?.updateHistory();
                 }
+            } else if (ev.button === 2) {
+                this.inputState.rightMouseDown = false;
+                ev.preventDefault();
             }
         });
 
@@ -77,7 +88,7 @@ export class UI extends React.Component<IProperties, IState> {
                     break;
             }
             if (this.state.mode === InteractionMode.Normal) {
-                if (this.inputState.mouseDown) {
+                if (this.inputState.leftMouseDown) {
                     switch (ev.key) {
                         case "ArrowUp":
                             this.props.map?.nudgeHighlightedTile(0, -1);
@@ -94,6 +105,21 @@ export class UI extends React.Component<IProperties, IState> {
                         case "ArrowRight":
                             this.props.map?.nudgeHighlightedTile(1, 0);
                             this.inputState.offsetChanged = true;
+                            break;
+                    }
+                } else if (this.inputState.rightMouseDown) {
+                    switch (ev.key) {
+                        case "ArrowUp":
+                            this.props.map?.scaleHighlightedTile(0.1);
+                            break;
+                        case "ArrowDown":
+                            this.props.map?.scaleHighlightedTile(-0.1);
+                            break;
+                        case "ArrowLeft":
+                            this.props.map?.rotateHighlightedTile(-1);
+                            break;
+                        case "ArrowRight":
+                            this.props.map?.rotateHighlightedTile(1);
                             break;
                     }
                 }

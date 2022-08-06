@@ -12,6 +12,8 @@ export function ApplyTileState(tile: Sprite, state: TileState, tileSize: number,
     tile.tint = state.tint;
     tile.x = (tileSize / 2) + state.offset.x;
     tile.y = (tileSize / 2) + state.offset.y;
+    tile.width = tileSize * state.scale;
+    tile.height = tileSize * state.scale;
 
     if (state.texture === "") {
         tile.texture = Texture.WHITE;

@@ -230,6 +230,28 @@ export class Map {
         }
     }
 
+    public rotateHighlightedTile(adjustment: number): void {
+        const tile = this.layers[this.activeLayer].getHighlightedTile();
+        if (tile) {
+            const state = tile.getState();
+            if (state) {
+                state.rotation += adjustment;
+                tile.setState({ rotation: state.rotation });
+            }
+        }
+    }
+
+    public scaleHighlightedTile(adjustment: number): void {
+        const tile = this.layers[this.activeLayer].getHighlightedTile();
+        if (tile) {
+            const state = tile.getState();
+            if (state) {
+                state.scale += adjustment;
+                tile.setState({ scale: state.scale });
+            }
+        }
+    }
+
     public showCollisionDebug(visible: boolean): void {
         this.collision.forEach((x) => x.forEach((y) => {
             if (y.graphic) {

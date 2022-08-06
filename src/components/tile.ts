@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { Container, Graphics, Point, Rectangle, Sprite, Texture } from "pixi.js";
+import { Container, Point, Rectangle, Sprite, Texture } from "pixi.js";
 import { ApplyTileState } from "src/utils/tile-utils";
 import { Tileset } from "./tileset";
 
@@ -7,6 +7,7 @@ export interface TileState {
     texture: string;
     rotation: number;
     offset: { x: number, y: number };
+    scale: number;
     tint: number;
     alpha: number;
 }
@@ -24,6 +25,7 @@ export class Tile extends Container {
             texture: "",
             alpha: 1,
             offset: { x: 0, y: 0 },
+            scale: 1,
             rotation: 0,
             tint: 0xFFFFFF
         };
@@ -71,6 +73,7 @@ export class Tile extends Container {
             alpha: 1,
             offset: { x: 0, y: 0 },
             rotation: 0,
+            scale: 1,
             tint: 0xFFFFFF
         };
 
