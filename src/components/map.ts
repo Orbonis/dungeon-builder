@@ -1,4 +1,3 @@
-import { cloneDeep } from "lodash";
 import { Application, Container, Graphics, Spritesheet } from "pixi.js";
 import { MapLayer } from "./map-layer";
 import { MapPanning } from "./map-panning";
@@ -8,6 +7,7 @@ import { Tileset } from "./tileset";
 export interface MapConfig {
     width: number;
     height: number;
+    history: boolean;
 }
 
 export interface CollisionTile {
@@ -95,7 +95,7 @@ export class Map {
             }
         }
 
-        this.saveStates();
+        this.updateHistory();
 
         this.container.interactive = true;
         this.container.addListener("pointerdown", () => this.mapPanning.startPanning());
@@ -245,7 +245,7 @@ export class Map {
             const collision = this.collision[coords.x][coords.y]
             collision[direction] = !collision[direction];
             this.redrawCollisionTile(collision);
-            this.saveStates();
+            this.updateHistory();
         }
     }
 
@@ -262,13 +262,13 @@ export class Map {
         this.setActiveLayer(this.activeLayer);
         this.resetPan();
         this.statesHistory = [];
-        this.saveStates();
+        this.updateHistory();
         this.refreshRenderOrder();
     }
 
     public save(): IMapSaveState {
         const tiles = this.layers.map((layer) => layer.getTileStates());
-        const collision = cloneDeep(this.collision.map((x) => cloneDeep(x).map((y) => { delete y.graphic; return y; })));
+        const collision = this.collision.map((x) => x.map((y) => ({ ...y, graphic: undefined })));
         return { tiles, collision };
     }
 
@@ -294,12 +294,14 @@ export class Map {
         this.setActiveLayer(this.activeLayer);
     }
 
-    public saveStates(): void {
-        // const state = this.save();
-        // this.statesHistory.push(state);
-        // while (this.statesHistory.length > 100) {
-        //     this.statesHistory.shift();
-        // }
+    public updateHistory(): void {
+        if (this.config.history) {
+            const state = this.save();
+            this.statesHistory.push(state);
+            while (this.statesHistory.length > 100) {
+                this.statesHistory.shift();
+            }
+        }
     }
 
     public undo(): void {
@@ -321,7 +323,7 @@ export class Map {
         if (this.onTileClickCallback) {
             const changed = this.onTileClickCallback(tile);
             if (changed) {
-                this.saveStates();
+                this.updateHistory();
             }
         }
     }

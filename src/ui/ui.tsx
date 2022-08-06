@@ -62,7 +62,7 @@ export class UI extends React.Component<IProperties, IState> {
                 this.inputState.mouseDown = false;
                 if (this.inputState.offsetChanged) {
                     this.inputState.offsetChanged = false;
-                    this.props.map?.saveStates();
+                    this.props.map?.updateHistory();
                 }
             }
         });
@@ -229,7 +229,7 @@ export class UI extends React.Component<IProperties, IState> {
     private save(): void {
         const data = this.props.map?.save();
         if (data) {
-            const json = JSON.stringify(data, null, 4);
+            const json = JSON.stringify(data);
             const blob = new Blob([json], {type: "application/json;charset=utf-8"});
             saveAs(blob, "map.json");
         }

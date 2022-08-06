@@ -1,5 +1,5 @@
-import { cloneDeep } from "lodash";
-import { Graphics, Point, Sprite, Texture } from "pixi.js";
+import { clone } from "lodash";
+import { Point, Sprite, Texture } from "pixi.js";
 import { ApplyTileState } from "src/utils/tile-utils";
 import { Tileset } from "./tileset";
 
@@ -40,7 +40,7 @@ export class Tile extends Sprite {
     }
 
     public setState(state: Partial<TileState>, tileset?: Tileset): void {
-        this.state = cloneDeep({ ...this.state, ...state });
+        this.state = clone({ ...this.state, ...state });
         ApplyTileState(this, this.state, this.coords, tileset);
         super.updateTransform();
     }
@@ -49,7 +49,7 @@ export class Tile extends Sprite {
         if (this.state.texture === "") {
             return undefined;
         } else {
-            return cloneDeep(this.state);
+            return this.state;
         }
     }
 
