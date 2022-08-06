@@ -1,3 +1,4 @@
+import { cloneDeep } from "lodash";
 import { Application, Container, Graphics, Spritesheet } from "pixi.js";
 import { MapLayer } from "./map-layer";
 import { MapPanning } from "./map-panning";
@@ -9,6 +10,19 @@ export interface MapConfig {
     height: number;
 }
 
+export interface CollisionTile {
+    graphic?: Graphics;
+    north: boolean;
+    east: boolean;
+    south: boolean;
+    west: boolean;
+}
+
+export interface IMapSaveState {
+    tiles: (TileState | undefined)[][][];
+    collision: CollisionTile[][];
+}
+
 export class Map {
     private app?: Application;
     private tileset?: Tileset;
@@ -17,12 +31,13 @@ export class Map {
     private container: Container;
     private grid: Graphics;
     private layers: MapLayer[];
+    private collision: CollisionTile[][];
 
     private mapPanning: MapPanning;
 
     private activeLayer: number;
 
-    private statesHistory: (TileState | undefined)[][][][] = [];
+    private statesHistory: IMapSaveState[] = [];
 
     private onTileClickCallback?: (tile: Tile) => boolean;
 
@@ -32,6 +47,7 @@ export class Map {
         this.container = new Container();
         this.grid = new Graphics();
         this.layers = [];
+        this.collision = [];
         this.activeLayer = 0;
 
         this.mapPanning = new MapPanning(this, 2);
@@ -57,8 +73,27 @@ export class Map {
         this.container.addChild(this.grid);
 
         const layer = this.createLayer();
-        this.layers = [ layer ];
+        this.layers.push(layer);
         this.container.addChild(layer);
+
+        for (let x = 0; x < this.config.width; x++) {
+            this.collision.push([]);
+            for (let y = 0; y < this.config.height; y++) {
+                const tile: CollisionTile = {
+                    graphic: new Graphics(),
+                    north: true,
+                    south: true,
+                    east: true,
+                    west: true
+                };
+                tile.graphic!.x = (x * 100) + 50;
+                tile.graphic!.y = (y * 100) + 50;
+                tile.graphic!.visible = false;
+                this.redrawCollisionTile(tile);
+                this.collision[x].push(tile);
+                this.container.addChild(tile.graphic!);
+            }
+        }
 
         this.saveStates();
 
@@ -192,6 +227,25 @@ export class Map {
         }
     }
 
+    public showCollisionDebug(visible: boolean): void {
+        this.collision.forEach((x) => x.forEach((y) => {
+            if (y.graphic) {
+                y.graphic.visible = visible;
+            }
+        }));
+    }
+
+    public toggleCollisionOnHighlightedTile(direction: "north" | "south" | "east" | "west"): void {
+        const tile = this.layers[this.activeLayer].getHighlightedTile();
+        if (tile) {
+            const coords = tile.getCoords();
+            const collision = this.collision[coords.x][coords.y]
+            collision[direction] = !collision[direction];
+            this.redrawCollisionTile(collision);
+            this.saveStates();
+        }
+    }
+
     public setTileState(tile: Tile, state: Partial<TileState>): void {
         tile.setState(state, this.tileset);
     }
@@ -208,29 +262,37 @@ export class Map {
         this.saveStates();
     }
 
-    public save(): (TileState | undefined)[][][] {
-        const states = this.layers.map((layer) => layer.getTileStates());
-        return states;
+    public save(): IMapSaveState {
+        const tiles = this.layers.map((layer) => layer.getTileStates());
+        const collision = cloneDeep(this.collision.map((x) => cloneDeep(x).map((y) => { delete y.graphic; return y; })));
+        return { tiles, collision };
     }
 
-    public load(states: (TileState | undefined)[][][]): void {
+    public load(state: IMapSaveState): void {
         this.layers.forEach((layer) => this.container.removeChild(layer));
         this.layers = [];
         this.activeLayer = 0;
-        states.forEach((states) => {
+        state.tiles.forEach((state) => {
             const layer = this.createLayer();
-            layer.setTileStates(states, this.tileset);
+            layer.setTileStates(state, this.tileset);
             this.layers.push(layer);
             this.container.addChild(layer);
         });
+        
+        for (let x = 0; x < this.config.width; x++) {
+            for (let y = 0; y < this.config.height; y++) {
+                this.collision[x][y] = { ...state.collision[x][y], graphic: this.collision[x][y].graphic };
+                this.redrawCollisionTile(this.collision[x][y]);
+            }
+        }
 
         this.container.addChildAt(this.grid, 0);
         this.setActiveLayer(this.activeLayer);
     }
 
     public saveStates(): void {
-        const states = this.layers.map((layer) => layer.getTileStates());
-        this.statesHistory.push(states);
+        const state = this.save();
+        this.statesHistory.push(state);
         while (this.statesHistory.length > 100) {
             this.statesHistory.shift();
         }
@@ -258,5 +320,37 @@ export class Map {
                 this.saveStates();
             }
         }
+    }
+
+    public redrawCollisionTile(tile: CollisionTile): void {
+        tile.graphic?.clear();
+        tile.graphic?.lineStyle(2, (tile.north) ? 0x00FF00 : 0xFF0000);
+        tile.graphic?.beginFill((tile.north) ? 0x00FF00 : 0xFF0000);
+        tile.graphic?.moveTo(-10, -45 + 10);
+        tile.graphic?.lineTo(0, -45);
+        tile.graphic?.lineTo(10, -45 + 10);
+        tile.graphic?.lineTo(-10, -45 + 10);
+        tile.graphic?.endFill();
+        tile.graphic?.lineStyle(2, (tile.south) ? 0x00FF00 : 0xFF0000);
+        tile.graphic?.beginFill((tile.south) ? 0x00FF00 : 0xFF0000);
+        tile.graphic?.moveTo(-10, 45 - 10);
+        tile.graphic?.lineTo(0, 45);
+        tile.graphic?.lineTo(10, 45 - 10);
+        tile.graphic?.lineTo(-10, 45 - 10);
+        tile.graphic?.endFill();
+        tile.graphic?.lineStyle(2, (tile.west) ? 0x00FF00 : 0xFF0000);
+        tile.graphic?.beginFill((tile.west) ? 0x00FF00 : 0xFF0000);
+        tile.graphic?.moveTo(-45 + 10, 10);
+        tile.graphic?.lineTo(-45, 0);
+        tile.graphic?.lineTo(-45 + 10, -10);
+        tile.graphic?.lineTo(-45 + 10, 10);
+        tile.graphic?.endFill();
+        tile.graphic?.lineStyle(2, (tile.east) ? 0x00FF00 : 0xFF0000);
+        tile.graphic?.beginFill((tile.east) ? 0x00FF00 : 0xFF0000);
+        tile.graphic?.moveTo(45 - 10, 10);
+        tile.graphic?.lineTo(45, 0);
+        tile.graphic?.lineTo(45 - 10, -10);
+        tile.graphic?.lineTo(45 - 10, 10);
+        tile.graphic?.endFill();
     }
 }

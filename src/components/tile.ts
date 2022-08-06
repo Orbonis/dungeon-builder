@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { Graphics, Loader, Point, Rectangle, Sprite, Text, Texture } from "pixi.js";
+import { Graphics, Point, Sprite, Texture } from "pixi.js";
 import { ApplyTileState } from "src/utils/tile-utils";
 import { Tileset } from "./tileset";
 
@@ -29,6 +29,7 @@ export class Tile extends Sprite {
         this.width = size;
         this.height = size;
         this.interactive = true;
+        this.interactiveChildren = false;
         this.buttonMode = true;
         this.anchor.set(0.5);
         this.texture = Texture.WHITE;
@@ -48,7 +49,7 @@ export class Tile extends Sprite {
         if (this.state.texture === "") {
             return undefined;
         } else {
-            return this.state;
+            return cloneDeep(this.state);
         }
     }
 

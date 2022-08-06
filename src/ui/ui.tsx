@@ -8,8 +8,9 @@ import { Tile, TileState } from "src/components/tile";
 
 enum InteractionMode {
     Normal = 0,
-    Delete = 1,
-    Pan = 2
+    Delete,
+    Collision,
+    Pan
 }
 
 interface IProperties {
@@ -97,6 +98,23 @@ export class UI extends React.Component<IProperties, IState> {
                     }
                 }
             }
+
+            if (this.state.mode === InteractionMode.Collision) {
+                switch (ev.key) {
+                    case "ArrowUp":
+                        this.props.map?.toggleCollisionOnHighlightedTile("north");
+                        break;
+                    case "ArrowDown":
+                        this.props.map?.toggleCollisionOnHighlightedTile("south");
+                        break;
+                    case "ArrowLeft":
+                        this.props.map?.toggleCollisionOnHighlightedTile("west");
+                        break;
+                    case "ArrowRight":
+                        this.props.map?.toggleCollisionOnHighlightedTile("east");
+                        break;
+                }
+            }
         });
 
         document.addEventListener("keyup", (ev: KeyboardEvent) => {
@@ -131,6 +149,7 @@ export class UI extends React.Component<IProperties, IState> {
             });
 
             this.props.map.enablePanning(this.state.mode === InteractionMode.Pan);
+            this.props.map.showCollisionDebug(this.state.mode === InteractionMode.Collision);
         }
     }
 
@@ -177,14 +196,14 @@ export class UI extends React.Component<IProperties, IState> {
                     <Menu.Item onClick={() => this.setState({ tileSelector: true })} style={{ minWidth: "50pt" }}>
                         <Image size="mini" src={(this.state.tileState.texture.length === 0) ? "" : this.props.map?.getTileset()?.getTextureURL(this.state.tileState)} />
                     </Menu.Item>
-                    <Menu.Item onClick={() => this.props.map?.undo()} style={{ minWidth: "50pt" }}>
-                        <Icon name="undo" size="big" fitted />
-                    </Menu.Item>
                     <Menu.Item onClick={() => this.setState({ tileState: { ...this.state.tileState, rotation: this.state.tileState.rotation + 90 } })} style={{ minWidth: "50pt" }}>
                         <Icon name="retweet" size="big" fitted />
                     </Menu.Item>
 
                     <Menu.Menu position="right">
+                        <Menu.Item onClick={() => this.props.map?.undo()} style={{ minWidth: "50pt" }}>
+                            <Icon name="undo" size="big" fitted />
+                        </Menu.Item>
                         <Menu.Item onPointerEnter={() => this.props.map?.revealMap(true)} onPointerLeave={() => this.props.map?.revealMap(false)} style={{ minWidth: "50pt", cursor: "pointer" }}>
                             <Icon name="eye" size="big" fitted />
                         </Menu.Item>
@@ -276,6 +295,8 @@ export class UI extends React.Component<IProperties, IState> {
                 return "delete";
             case InteractionMode.Pan:
                 return "hand paper outline";
+            case InteractionMode.Collision:
+                return "exchange";
         }
     }
 
