@@ -332,6 +332,19 @@ export class Map {
         tile?.clear();
     }
 
+    public resetHighlightedTilePosition(): void {
+        const tile = this.layers[this.activeLayer].getHighlightedTile();
+        if (tile) {
+            const state = tile.getState();
+            if (state) {
+                state.scale = 1;
+                state.rotation = 0;
+                state.offset = { x: 0, y: 0 };
+                tile.setState({ ...state });
+            }
+        }
+    }
+
     public showCollisionDebug(visible: boolean): void {
         this.collision.forEach((x) => x.forEach((y) => {
             if (y.graphic) {

@@ -27,6 +27,7 @@ interface IState {
 
 interface IInputState {
     leftMouseDown: boolean;
+    middleMouseDown: boolean;
     rightMouseDown: boolean;
     offsetChanged: boolean;
 }
@@ -34,6 +35,7 @@ interface IInputState {
 export class UI extends React.Component<IProperties, IState> {
     private inputState: IInputState = {
         leftMouseDown: false,
+        middleMouseDown: false,
         rightMouseDown: false,
         offsetChanged: false
     };
@@ -63,6 +65,11 @@ export class UI extends React.Component<IProperties, IState> {
             } else if (ev.button === 2) {
                 this.inputState.rightMouseDown = true;
                 ev.preventDefault();
+            } else if (ev.button === 1) {
+                this.inputState.middleMouseDown = true;
+                ev.preventDefault();
+
+                this.props.map?.resetHighlightedTilePosition();
             }
         });
 
@@ -75,6 +82,9 @@ export class UI extends React.Component<IProperties, IState> {
                 }
             } else if (ev.button === 2) {
                 this.inputState.rightMouseDown = false;
+                ev.preventDefault();
+            } else if (ev.button === 1) {
+                this.inputState.middleMouseDown = false;
                 ev.preventDefault();
             }
         });
