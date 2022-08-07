@@ -153,7 +153,7 @@ export class Map {
                 this.container.addChild(collision.graphic!);
 
                 const event: EventTile = {
-                    text: new Text("", { fontSize: "14pt", fill: "#FF0000", stroke: "#FFFFFF", strokeThickness: 2 }),
+                    text: new Text("", { fontSize: "14pt", fill: "#FF0000", stroke: "#FFFFFF", strokeThickness: 2, fontFamily: "Roboto Condensed" }),
                     id: ""
                 };
                 event.text!.x = (x * 100) + 50;
@@ -359,6 +359,10 @@ export class Map {
                 y.text.visible = visible;
             }
         }))
+    }
+
+    public showIDDebug(visible: boolean): void {
+        this.layers.forEach((layer) => layer.foreachTile((tile) => tile.id.visible = visible));
     }
 
     public toggleCollisionOnHighlightedTile(direction: "north" | "south" | "east" | "west"): void {

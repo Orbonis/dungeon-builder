@@ -1,9 +1,10 @@
 import { cloneDeep } from "lodash";
-import { Container, Point, Rectangle, Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { Container, Point, Rectangle, Sprite, Text, Texture } from "pixi.js";
 import { ApplyTileState } from "src/utils/tile-utils";
 import { Tileset } from "./tileset";
 
 export interface TileState {
+    id: string;
     texture: string;
     rotation: number;
     offset: { x: number, y: number };
@@ -13,6 +14,7 @@ export interface TileState {
 }
 export class Tile extends Container {
     public sprite: Sprite;
+    public id: Text;
 
     private state: TileState;
     private coords: Point;
@@ -22,6 +24,7 @@ export class Tile extends Container {
         super();
 
         this.state = {
+            id: "",
             texture: "",
             alpha: 1,
             offset: { x: 0, y: 0 },
@@ -47,6 +50,13 @@ export class Tile extends Container {
         this.sprite.height = size;
         this.sprite.anchor.set(0.5);
         this.sprite.texture = Texture.WHITE;
+
+        this.id = new Text("", { fontSize: "14pt", fill: "#222222", stroke: "#FFFFFF", strokeThickness: 2, fontFamily: "Roboto Condensed" })
+        this.id.x = 5;
+        this.id.y = 95;
+        this.id.anchor.set(0, 1);
+        this.id.visible = false;
+        this.addChild(this.id);
     }
 
     public getCoords(): Point {
@@ -55,6 +65,7 @@ export class Tile extends Container {
 
     public setState(state: Partial<TileState>, tileset?: Tileset): void {
         this.state = cloneDeep({ ...this.state, ...state });
+        this.id.text = this.state.id;
         ApplyTileState(this.sprite, this.state, this.size, tileset);
         super.updateTransform();
     }
@@ -65,6 +76,7 @@ export class Tile extends Container {
 
     public clear(): void {
         this.state = {
+            id: "",
             texture: "",
             alpha: 1,
             offset: { x: 0, y: 0 },
@@ -74,6 +86,7 @@ export class Tile extends Container {
         };
 
         ApplyTileState(this.sprite, this.state, this.size);
+        this.id.text = this.state.id;
     }
 
     public updateTransform(): void {

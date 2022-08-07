@@ -3,13 +3,14 @@ import { Checkbox, Container, Dropdown, Grid, Icon, Image, Input, Menu, Modal, S
 import { Map } from "src/components/map";
 import { saveAs } from "file-saver";
 import fileDialog from "file-dialog";
-import { Point, Spritesheet, Texture } from "pixi.js";
+import { Spritesheet, Texture } from "pixi.js";
 import { Tile, TileState } from "src/components/tile";
 
 enum InteractionMode {
     Paint = 0,
     Delete,
     Collision,
+    Identifiers,
     Events,
     Pan
 }
@@ -46,6 +47,7 @@ export class UI extends React.Component<IProperties, IState> {
         this.state = {
             tileSelector: false,
             tileState: {
+                id: "",
                 texture: "",
                 alpha: 1,
                 offset: { x: 0, y: 0 },
@@ -179,6 +181,7 @@ export class UI extends React.Component<IProperties, IState> {
             }
 
             this.props.map.setOnTileClickCallback((tile: Tile) => {
+                const coords = tile.getCoords();
                 switch (this.state.mode) {
                     case InteractionMode.Paint:
                         const { texture, tint } = this.state.tileState;
@@ -188,9 +191,13 @@ export class UI extends React.Component<IProperties, IState> {
                         tile.clear();
                         return true;
                     case InteractionMode.Events:
-                        const coords = tile.getCoords();
-                        this.getEventInput(this.props.map?.getEvent(coords.x, coords.y)).then((event: string) => {
+                        this.getTextInput(this.props.map?.getEvent(coords.x, coords.y)).then((event: string) => {
                             this.props.map?.setEvent(coords.x, coords.y, event);
+                        });
+                        return true;
+                    case InteractionMode.Identifiers:
+                        this.getTextInput(this.props.map?.getEvent(coords.x, coords.y)).then((id: string) => {
+                            tile.setState({ id });
                         });
                         return true;
                 }
@@ -201,6 +208,7 @@ export class UI extends React.Component<IProperties, IState> {
             this.props.map.enablePanning(this.state.mode === InteractionMode.Pan);
             this.props.map.showCollisionDebug(this.state.mode === InteractionMode.Collision);
             this.props.map.showEventDebug(this.state.mode === InteractionMode.Events);
+            this.props.map.showIDDebug(this.state.mode === InteractionMode.Identifiers);
         }
     }
 
@@ -395,9 +403,9 @@ export class UI extends React.Component<IProperties, IState> {
         });
     }
 
-    private getEventInput(defaultEvent?: string): Promise<string> {
+    private getTextInput(defaultEvent?: string): Promise<string> {
         return new Promise((resolve) => {
-            const event = window.prompt("Enter an event id:", defaultEvent ?? "");
+            const event = window.prompt("Enter text:", defaultEvent ?? "");
             resolve(event ?? "");
         });
     }
