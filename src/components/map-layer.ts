@@ -28,26 +28,24 @@ export class MapLayer extends Container {
                 this.tiles[x].push(new Tile(x, y, tileSize));
                 this.tiles[x][y].x = x * tileSize;
                 this.tiles[x][y].y = y * tileSize;
-                this.tiles[x][y].on("pointerdown", (e: InteractionEvent) => {
-                    if (e.data.buttons === 1) {
-                        onTileClick(this.tiles[x][y]);
-                    }
-                });
                 if (editor) {
+                    this.tiles[x][y].on("pointerdown", (e: InteractionEvent) => {
+                        if (e.data.buttons === 1) {
+                            onTileClick(this.tiles[x][y]);
+                        }
+                    });
                     this.tiles[x][y].on("pointerout", (e: InteractionEvent) => {
                         this.highlights[x][y].visible = false;
                         this.highlightedTile = undefined;
                     });
-                }
-                this.tiles[x][y].on("pointerover", (e: InteractionEvent) => {
-                    if (e.data.buttons === 1) {
-                        onTileClick(this.tiles[x][y]);
-                    }
-                    if (editor) {
+                    this.tiles[x][y].on("pointerover", (e: InteractionEvent) => {
+                        if (e.data.buttons === 1) {
+                            onTileClick(this.tiles[x][y]);
+                        }
                         this.highlights[x][y].visible = true;
                         this.highlightedTile = this.tiles[x][y];
-                    }
-                });
+                    });
+                }
                 this.addChild(this.tiles[x][y]);
             }
         }
