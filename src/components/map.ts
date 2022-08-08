@@ -9,6 +9,7 @@ export interface MapConfig {
     width: number;
     height: number;
     history: boolean;
+    editor: boolean;
 }
 
 export interface CollisionTile {
@@ -105,14 +106,16 @@ export class Map {
         this.container.pivot.set((this.config.width * 100) / 2, (this.config.height * 100) / 2);
 
         this.grid.clear();
-        this.grid.lineStyle(2, 0xEEEEEE);
-        for (let x = 0; x < this.config.width; x++) {
-            for (let y = 0; y < this.config.height; y++) {
-                this.grid.drawRect(x * 100, y * 100, 100, 100);
+        if (this.config.editor) {
+            this.grid.lineStyle(2, 0xEEEEEE);
+            for (let x = 0; x < this.config.width; x++) {
+                for (let y = 0; y < this.config.height; y++) {
+                    this.grid.drawRect(x * 100, y * 100, 100, 100);
+                }
             }
+            this.grid.lineStyle(2, 0xCC8888, 0.5);
+            this.grid.drawRect(0, 0, this.config.width * 100, this.config.height * 100);
         }
-        this.grid.lineStyle(2, 0xCC8888, 0.5);
-        this.grid.drawRect(0, 0, this.config.width * 100, this.config.height * 100);
 
         this.collision.forEach((x) => x.forEach((y) => {
             if (y.graphic) {
@@ -181,7 +184,9 @@ export class Map {
     }
 
     public enablePanning(enabled: boolean): void {
-        this.mapPanning.setEnabled(enabled);
+        if (this.config.editor) {
+            this.mapPanning.setEnabled(enabled);
+        }
     }
 
     public pan(x: number, y: number): void {
@@ -227,14 +232,16 @@ export class Map {
         this.activeLayer = Math.max(0, Math.min(this.layers.length - 1, index));
         this.layers.forEach((x, i) => {
             x.interactiveChildren = i === this.activeLayer;
-            x.alpha = (i === this.activeLayer) ? 1 : 0.5;
+            x.alpha = (i === this.activeLayer || !this.config.editor) ? 1 : 0.5;
         });
     }
 
     public revealMap(reveal: boolean): void {
-        this.layers.forEach((x, i) => {
-            x.alpha = (i === this.activeLayer || reveal) ? 1 : 0.5;
-        });
+        if (this.config.editor) {
+            this.layers.forEach((x, i) => {
+                x.alpha = (i === this.activeLayer || reveal) ? 1 : 0.5;
+            });
+        }
     }
 
     public addLayerBelow(): void {
@@ -469,7 +476,7 @@ export class Map {
     }
 
     private createLayer(): MapLayer {
-        return new MapLayer(this.config.width, this.config.height, 100, (tile: Tile) => this.onTileClick(tile));
+        return new MapLayer(this.config.width, this.config.height, 100, this.config.editor, (tile: Tile) => this.onTileClick(tile));
     }
 
     private onTileClick(tile: Tile): void {
@@ -483,34 +490,36 @@ export class Map {
 
     public redrawCollisionTile(tile: CollisionTile): void {
         tile.graphic?.clear();
-        tile.graphic?.lineStyle(2, (tile.north) ? 0x00FF00 : 0xFF0000);
-        tile.graphic?.beginFill((tile.north) ? 0x00FF00 : 0xFF0000);
-        tile.graphic?.moveTo(-10, -45 + 10);
-        tile.graphic?.lineTo(0, -45);
-        tile.graphic?.lineTo(10, -45 + 10);
-        tile.graphic?.lineTo(-10, -45 + 10);
-        tile.graphic?.endFill();
-        tile.graphic?.lineStyle(2, (tile.south) ? 0x00FF00 : 0xFF0000);
-        tile.graphic?.beginFill((tile.south) ? 0x00FF00 : 0xFF0000);
-        tile.graphic?.moveTo(-10, 45 - 10);
-        tile.graphic?.lineTo(0, 45);
-        tile.graphic?.lineTo(10, 45 - 10);
-        tile.graphic?.lineTo(-10, 45 - 10);
-        tile.graphic?.endFill();
-        tile.graphic?.lineStyle(2, (tile.west) ? 0x00FF00 : 0xFF0000);
-        tile.graphic?.beginFill((tile.west) ? 0x00FF00 : 0xFF0000);
-        tile.graphic?.moveTo(-45 + 10, 10);
-        tile.graphic?.lineTo(-45, 0);
-        tile.graphic?.lineTo(-45 + 10, -10);
-        tile.graphic?.lineTo(-45 + 10, 10);
-        tile.graphic?.endFill();
-        tile.graphic?.lineStyle(2, (tile.east) ? 0x00FF00 : 0xFF0000);
-        tile.graphic?.beginFill((tile.east) ? 0x00FF00 : 0xFF0000);
-        tile.graphic?.moveTo(45 - 10, 10);
-        tile.graphic?.lineTo(45, 0);
-        tile.graphic?.lineTo(45 - 10, -10);
-        tile.graphic?.lineTo(45 - 10, 10);
-        tile.graphic?.endFill();
+        if (this.config.editor) {
+            tile.graphic?.lineStyle(2, (tile.north) ? 0x00FF00 : 0xFF0000);
+            tile.graphic?.beginFill((tile.north) ? 0x00FF00 : 0xFF0000);
+            tile.graphic?.moveTo(-10, -45 + 10);
+            tile.graphic?.lineTo(0, -45);
+            tile.graphic?.lineTo(10, -45 + 10);
+            tile.graphic?.lineTo(-10, -45 + 10);
+            tile.graphic?.endFill();
+            tile.graphic?.lineStyle(2, (tile.south) ? 0x00FF00 : 0xFF0000);
+            tile.graphic?.beginFill((tile.south) ? 0x00FF00 : 0xFF0000);
+            tile.graphic?.moveTo(-10, 45 - 10);
+            tile.graphic?.lineTo(0, 45);
+            tile.graphic?.lineTo(10, 45 - 10);
+            tile.graphic?.lineTo(-10, 45 - 10);
+            tile.graphic?.endFill();
+            tile.graphic?.lineStyle(2, (tile.west) ? 0x00FF00 : 0xFF0000);
+            tile.graphic?.beginFill((tile.west) ? 0x00FF00 : 0xFF0000);
+            tile.graphic?.moveTo(-45 + 10, 10);
+            tile.graphic?.lineTo(-45, 0);
+            tile.graphic?.lineTo(-45 + 10, -10);
+            tile.graphic?.lineTo(-45 + 10, 10);
+            tile.graphic?.endFill();
+            tile.graphic?.lineStyle(2, (tile.east) ? 0x00FF00 : 0xFF0000);
+            tile.graphic?.beginFill((tile.east) ? 0x00FF00 : 0xFF0000);
+            tile.graphic?.moveTo(45 - 10, 10);
+            tile.graphic?.lineTo(45, 0);
+            tile.graphic?.lineTo(45 - 10, -10);
+            tile.graphic?.lineTo(45 - 10, 10);
+            tile.graphic?.endFill();
+        }
     }
 
     private refreshRenderOrder(): void {

@@ -7,7 +7,7 @@ export class MapLayer extends Container {
     private highlights: Graphics[][];
     private highlightedTile?: Tile;
 
-    constructor(width: number, height: number, tileSize: number, onTileClick: (tile: Tile) => void) {
+    constructor(width: number, height: number, tileSize: number, editor: boolean, onTileClick: (tile: Tile) => void) {
         super();
 
         this.tiles = []
@@ -19,8 +19,10 @@ export class MapLayer extends Container {
                 this.highlights[x].push(new Graphics());
                 this.highlights[x][y].x = x * tileSize;
                 this.highlights[x][y].y = y * tileSize;
-                this.highlights[x][y].lineStyle(2, 0xCC8888);
-                this.highlights[x][y].drawRect(0, 0, tileSize, tileSize);
+                if (editor) {
+                    this.highlights[x][y].lineStyle(2, 0xCC8888);
+                    this.highlights[x][y].drawRect(0, 0, tileSize, tileSize);
+                }
                 this.highlights[x][y].visible = false;
 
                 this.tiles[x].push(new Tile(x, y, tileSize));
@@ -31,16 +33,20 @@ export class MapLayer extends Container {
                         onTileClick(this.tiles[x][y]);
                     }
                 });
-                this.tiles[x][y].on("pointerout", (e: InteractionEvent) => {
-                    this.highlights[x][y].visible = false;
-                    this.highlightedTile = undefined;
-                });
+                if (editor) {
+                    this.tiles[x][y].on("pointerout", (e: InteractionEvent) => {
+                        this.highlights[x][y].visible = false;
+                        this.highlightedTile = undefined;
+                    });
+                }
                 this.tiles[x][y].on("pointerover", (e: InteractionEvent) => {
                     if (e.data.buttons === 1) {
                         onTileClick(this.tiles[x][y]);
                     }
-                    this.highlights[x][y].visible = true;
-                    this.highlightedTile = this.tiles[x][y];
+                    if (editor) {
+                        this.highlights[x][y].visible = true;
+                        this.highlightedTile = this.tiles[x][y];
+                    }
                 });
                 this.addChild(this.tiles[x][y]);
             }
