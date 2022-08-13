@@ -54,6 +54,8 @@ export class Map {
 
     private onTileClickCallback?: (tile: Tile) => boolean;
 
+    private tileIDCache: { [key: string]: Tile } = {};
+
     constructor(config: MapConfig) {
         this.config = config;
 
@@ -405,6 +407,14 @@ export class Map {
         this.refreshRenderOrder();
     }
 
+    public getTileByID(id: string): Tile | null {
+        return this.tileIDCache[id] ?? null;
+    }
+
+    public getTileIDs(): string[] {
+        return Object.keys(this.tileIDCache);
+    }
+
     public new(width?: number, height?: number): void {
         this.resize(width ?? this.config.width, height ?? this.config.height);
     }
@@ -452,6 +462,18 @@ export class Map {
         this.redrawEventTiles();
         this.refreshRenderOrder();
         this.setActiveLayer(this.activeLayer);
+
+        if (!this.config.editor) {
+            this.tileIDCache = {};
+            this.layers.forEach((layer) => {
+                layer.foreachTile((tile) => {
+                    const state = tile.getState();
+                    if (state.id.length > 0) {
+                        this.tileIDCache[state.id] = tile;
+                    }
+                });
+            });
+        }
     }
 
     public loadResource(path: string, hard?: boolean): Promise<void> {
@@ -487,19 +509,6 @@ export class Map {
         this.load(this.save());
     }
 
-    private createLayer(): MapLayer {
-        return new MapLayer(this.config.width, this.config.height, 100, this.config.editor, (tile: Tile) => this.onTileClick(tile));
-    }
-
-    private onTileClick(tile: Tile): void {
-        if (this.onTileClickCallback) {
-            const changed = this.onTileClickCallback(tile);
-            if (changed) {
-                this.updateHistory();
-            }
-        }
-    }
-
     public redrawCollisionTile(tile: CollisionTile): void {
         tile.graphic?.clear();
         if (this.config.editor) {
@@ -531,6 +540,19 @@ export class Map {
             tile.graphic?.lineTo(45 - 10, -10);
             tile.graphic?.lineTo(45 - 10, 10);
             tile.graphic?.endFill();
+        }
+    }
+
+    private createLayer(): MapLayer {
+        return new MapLayer(this.config.width, this.config.height, 100, this.config.editor, (tile: Tile) => this.onTileClick(tile));
+    }
+
+    private onTileClick(tile: Tile): void {
+        if (this.onTileClickCallback) {
+            const changed = this.onTileClickCallback(tile);
+            if (changed) {
+                this.updateHistory();
+            }
         }
     }
 
