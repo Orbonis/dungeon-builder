@@ -1,5 +1,5 @@
 import { clone } from "lodash";
-import { Application, Container, Graphics, Spritesheet, Text } from "pixi.js";
+import { Application, Container, Graphics, Loader, Spritesheet, Text } from "pixi.js";
 import { MapLayer } from "./map-layer";
 import { MapPanning } from "./map-panning";
 import { Tile, TileState } from "./tile";
@@ -452,6 +452,18 @@ export class Map {
         this.redrawEventTiles();
         this.refreshRenderOrder();
         this.setActiveLayer(this.activeLayer);
+    }
+
+    public loadResource(path: string, hard?: boolean): Promise<void> {
+        return new Promise((resolve) => {
+            (new Loader())
+                .add(path)
+                .load((loader) => {
+                    const map = loader.resources[path].data;
+                    this.load(map, hard);
+                    resolve();
+                })
+        });
     }
 
     public updateHistory(): void {

@@ -1,10 +1,10 @@
 import React from "react";
 import { Checkbox, Container, Dropdown, Grid, Icon, Image, Input, Menu, Modal, SemanticICONS } from "semantic-ui-react";
-import { Map } from "src/components/map";
+import { Map } from "../components/map";
 import { saveAs } from "file-saver";
 import fileDialog from "file-dialog";
 import { Spritesheet, Texture } from "pixi.js";
-import { Tile, TileState } from "src/components/tile";
+import { Tile, TileState } from "../components/tile";
 
 enum InteractionMode {
     Paint = 0,

@@ -1,5 +1,5 @@
 import { Loader, Point, Renderer, Sprite, Spritesheet, Texture } from "pixi.js";
-import { ApplyTileState } from "src/utils/tile-utils";
+import { ApplyTileState } from "../utils/tile-utils";
 import { TileState } from "./tile";
 
 export class Tileset {

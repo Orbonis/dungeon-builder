@@ -1,6 +1,6 @@
 import { cloneDeep } from "lodash";
 import { Container, Point, Rectangle, Sprite, Text, Texture } from "pixi.js";
-import { ApplyTileState } from "src/utils/tile-utils";
+import { ApplyTileState } from "../utils/tile-utils";
 import { Tileset } from "./tileset";
 
 export interface TileState {
@@ -20,7 +20,7 @@ export class Tile extends Container {
     private coords: Point;
     private size: number;
 
-    constructor(x: number, y: number, size: number) {
+    constructor(x: number, y: number, size: number, editor: boolean = false) {
         super();
 
         this.state = {
@@ -41,10 +41,12 @@ export class Tile extends Container {
         this.coords = new Point(x, y);
         this.size = size;
 
-        this.interactive = true;
-        this.interactiveChildren = false;
-        this.buttonMode = true;
-        this.hitArea = new Rectangle(0, 0, size, size);
+        if (editor) {
+            this.interactive = true;
+            this.interactiveChildren = false;
+            this.buttonMode = true;
+            this.hitArea = new Rectangle(0, 0, size, size);
+        }
 
         this.sprite.width = size;
         this.sprite.height = size;

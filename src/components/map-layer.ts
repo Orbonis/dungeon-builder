@@ -25,7 +25,7 @@ export class MapLayer extends Container {
                 }
                 this.highlights[x][y].visible = false;
 
-                this.tiles[x].push(new Tile(x, y, tileSize));
+                this.tiles[x].push(new Tile(x, y, tileSize, editor));
                 this.tiles[x][y].x = x * tileSize;
                 this.tiles[x][y].y = y * tileSize;
                 if (editor) {

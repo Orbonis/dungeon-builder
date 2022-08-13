@@ -1,6 +1,6 @@
 import { Point, Sprite, Texture } from "pixi.js";
-import { Tile, TileState } from "src/components/tile";
-import { Tileset } from "src/components/tileset";
+import { Tile, TileState } from "../components/tile";
+import { Tileset } from "../components/tileset";
 
 export function ApplyTileState(tile: Sprite, state: TileState, tileSize: number, tileset?: Tileset): void {
     if (tileset) {
