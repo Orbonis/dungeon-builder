@@ -393,6 +393,10 @@ export class Map {
         return this.events[x][y].id;
     }
 
+    public getCollision(x: number, y: number): CollisionTile {
+        return this.collision[x][y];
+    }
+
     public setEvent(x: number, y: number, id: string): void {
         this.events[x][y].id = id;
         this.redrawEventTiles();
@@ -405,6 +409,12 @@ export class Map {
     public setPlayerLayer(): void {
         this.playerLayerIndex = this.activeLayer;
         this.refreshRenderOrder();
+    }
+
+    public addPlayer(player: Container): void {
+        this.container.addChildAt(player, this.playerLayerIndex);
+        player.x = 50;
+        player.y = 50;
     }
 
     public getTileByID(id: string): Tile | null {
